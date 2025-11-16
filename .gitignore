@@ -89,6 +89,10 @@ backups/
 *.sql
 *.dump
 
+# Exception: Keep schema/data SQL files in version control
+!backend/src/main/resources/schema.sql
+!backend/src/main/resources/data.sql
+
 # SSL certificates
 nginx/ssl/*.pem
 nginx/ssl/*.key
