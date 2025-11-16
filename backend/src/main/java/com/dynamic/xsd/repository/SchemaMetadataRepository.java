@@ -38,5 +38,5 @@ public interface SchemaMetadataRepository extends JpaRepository<SchemaMetadata, 
     @Query("SELECT s FROM SchemaMetadata s WHERE s.uploadedBy = :username")
     List<SchemaMetadata> findByUploadedBy(String username);
 
-    List<SchemaMetadata> findTop10ByOrderByCreatedAtDesc();
+    List<SchemaMetadata> findTop10ByOrderByUploadedAtDesc();
 }

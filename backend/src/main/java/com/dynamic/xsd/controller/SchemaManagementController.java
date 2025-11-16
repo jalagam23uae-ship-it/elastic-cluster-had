@@ -24,14 +24,14 @@ import org.springframework.web.multipart.MultipartFile;
  * REST Controller for Schema Management operations.
  *
  * Endpoints:
- * - POST /api/v1/schema/upload - Upload XSD schema
- * - GET /api/v1/schema/{serviceName} - Get schema by service name
- * - GET /api/v1/schema/list - List all schemas
- * - DELETE /api/v1/schema/{serviceName} - Delete schema
+ * - POST /api/v1/schemas/upload - Upload XSD schema
+ * - GET /api/v1/schemas/{serviceName} - Get schema by service name
+ * - GET /api/v1/schemas/list - List all schemas
+ * - DELETE /api/v1/schemas/{serviceName} - Delete schema
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/schema")
+@RequestMapping("/api/v1/schemas")
 @RequiredArgsConstructor
 @Tag(name = "Schema Management", description = "APIs for managing XSD schemas")
 public class SchemaManagementController {

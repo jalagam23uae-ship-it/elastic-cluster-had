@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -34,6 +35,7 @@ public class CatalogController {
 
     @GetMapping("/services")
     @Operation(summary = "List All Services", description = "Get list of all deployed services")
+    @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<List<ServiceCatalogEntry>>> listServices() {
 
         log.debug("List all services request");
@@ -68,6 +70,7 @@ public class CatalogController {
 
     @GetMapping("/services/{serviceName}")
     @Operation(summary = "Get Service Details", description = "Get detailed information about a service")
+    @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<Map<String, Object>>> getServiceDetails(
             @PathVariable String serviceName) {
 
@@ -76,20 +79,63 @@ public class CatalogController {
         ServiceDefinition service = serviceRepository.findByServiceName(serviceName)
             .orElseThrow(() -> new IllegalArgumentException("Service not found: " + serviceName));
 
-        SchemaMetadata schema = schemaRepository.findById(service.getSchemaId())
-            .orElseThrow(() -> new IllegalArgumentException("Schema not found"));
+        SchemaMetadata schema = service.getSchemaMetadata();
+        if (schema == null) {
+            throw new IllegalArgumentException("Schema not found");
+        }
+
+        // Build service DTO
+        Map<String, Object> serviceDto = new HashMap<>();
+        serviceDto.put("id", service.getId());
+        serviceDto.put("serviceName", service.getServiceName());
+        serviceDto.put("version", service.getVersion());
+        serviceDto.put("status", service.getStatus().name());
+        serviceDto.put("deployedAt", service.getDeployedAt());
+        serviceDto.put("deployedBy", service.getDeployedBy());
+        serviceDto.put("totalRequests", service.getTotalRequests());
+        serviceDto.put("successfulRequests", service.getSuccessfulRequests());
+        serviceDto.put("failedRequests", service.getFailedRequests());
+        serviceDto.put("averageResponseTime", service.getAverageResponseTime());
+
+        // Build schema DTO
+        Map<String, Object> schemaDto = new HashMap<>();
+        schemaDto.put("id", schema.getId());
+        schemaDto.put("serviceName", schema.getServiceName());
+        schemaDto.put("version", schema.getVersion());
+        schemaDto.put("namespace", schema.getNamespace());
+        schemaDto.put("targetNamespace", schema.getTargetNamespace());
+        schemaDto.put("status", schema.getStatus().name());
+        schemaDto.put("uploadedAt", schema.getUploadedAt());
+        schemaDto.put("uploadedBy", schema.getUploadedBy());
+        schemaDto.put("generatedPojos", schema.getGeneratedPojos());
+
+        // Build endpoint DTOs
+        List<Map<String, Object>> endpointDtos = endpointRepository.findByServiceDefinitionId(service.getId()).stream()
+            .map(endpoint -> {
+                Map<String, Object> endpointDto = new HashMap<>();
+                endpointDto.put("id", endpoint.getId());
+                endpointDto.put("type", endpoint.getEndpointType().name());
+                endpointDto.put("path", endpoint.getPath());
+                endpointDto.put("httpMethod", endpoint.getHttpMethod() != null ? endpoint.getHttpMethod().name() : null);
+                endpointDto.put("operationName", endpoint.getOperationName());
+                endpointDto.put("description", endpoint.getDescription());
+                endpointDto.put("active", endpoint.getActive());
+                return endpointDto;
+            })
+            .collect(Collectors.toList());
 
         Map<String, Object> details = new HashMap<>();
-        details.put("service", service);
-        details.put("schema", schema);
-        details.put("endpoints", endpointRepository.findByServiceDefinitionId(service.getId()));
-        details.put("wsdlAvailable", service.getWsdlContent() != null);
+        details.put("service", serviceDto);
+        details.put("schema", schemaDto);
+        details.put("endpoints", endpointDtos);
+        details.put("wsdlAvailable", service.getWsdlContent() != null && !service.getWsdlContent().isEmpty());
 
         return ResponseEntity.ok(ApiResponse.success(details, "Service details retrieved"));
     }
 
     @GetMapping("/schemas")
     @Operation(summary = "List All Schemas", description = "Get list of all schemas")
+    @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<List<SchemaCatalogEntry>>> listSchemas(
             @RequestParam(required = false) SchemaMetadata.SchemaStatus status) {
 
@@ -104,7 +150,7 @@ public class CatalogController {
 
         List<SchemaCatalogEntry> catalog = schemas.stream()
             .map(schema -> {
-                boolean deployed = serviceRepository.findBySchemaId(schema.getId()).stream()
+                boolean deployed = serviceRepository.findBySchemaMetadataId(schema.getId()).stream()
                     .anyMatch(s -> s.getStatus() == ServiceDefinition.ServiceStatus.DEPLOYED);
 
                 return SchemaCatalogEntry.builder()
@@ -126,6 +172,7 @@ public class CatalogController {
 
     @GetMapping("/endpoints")
     @Operation(summary = "List All Endpoints", description = "Get list of all available endpoints")
+    @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> listAllEndpoints() {
 
         log.debug("List all endpoints request");

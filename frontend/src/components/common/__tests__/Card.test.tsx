@@ -27,7 +27,7 @@ describe('Card Component', () => {
   it('renders header actions when provided', () => {
     const actions = <button>Action</button>;
     render(
-      <Card title="Title" actions={actions}>
+      <Card title="Title" headerAction={actions}>
         <div>Content</div>
       </Card>
     );

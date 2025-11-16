@@ -23,7 +23,7 @@ public interface ServiceDefinitionRepository extends JpaRepository<ServiceDefini
 
     Page<ServiceDefinition> findByStatus(ServiceStatus status, Pageable pageable);
 
-    List<ServiceDefinition> findBySchemaId(String schemaId);
+    List<ServiceDefinition> findBySchemaMetadataId(String schemaId);
 
     @Query("SELECT s FROM ServiceDefinition s WHERE s.status = 'DEPLOYED'")
     List<ServiceDefinition> findAllDeployed();
@@ -39,5 +39,5 @@ public interface ServiceDefinitionRepository extends JpaRepository<ServiceDefini
 
     List<ServiceDefinition> findTop10ByOrderByDeployedAtDesc();
 
-    Optional<ServiceDefinition> findFirstBySchemaId(String schemaId);
+    Optional<ServiceDefinition> findFirstBySchemaMetadataId(String schemaId);
 }

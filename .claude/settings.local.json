@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn compile:*)",
+      "Bash(mvn help:effective-pom:*)",
+      "Bash(mvn dependency:tree:*)",
+      "Bash(mvn clean compile:*)",
+      "Bash(mvn clean install:*)",
+      "Bash(mvn package:*)",
+      "Bash(mvn clean package:*)",
+      "Bash(docker build:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(docker run:*)",
+      "Bash(docker logs:*)",
+      "Bash(docker rm:*)",
+      "Bash(docker start:*)",
+      "Bash(docker inspect:*)",
+      "Bash(docker exec:*)",
+      "Bash(docker restart:*)",
+      "Bash(curl:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker stop:*)",
+      "Bash(docker network:*)",
+      "Bash(jq:*)",
+      "Bash(mvn:*)",
+      "Bash(python -m json.tool:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -72,6 +72,8 @@ public class ServiceDeploymentService {
 
             // Create or update service definition
             ServiceDefinition serviceDefinition = createOrUpdateServiceDefinition(schema);
+            // Save immediately to get ID for endpoint mappings
+            serviceDefinition = serviceRepository.save(serviceDefinition);
 
             // Generate and register REST endpoints
             List<EndpointMapping> restEndpoints = restEndpointGenerator.generateRestEndpoints(
@@ -120,7 +122,7 @@ public class ServiceDeploymentService {
             result.error = e;
 
             // Update service status to FAILED if exists
-            serviceRepository.findFirstBySchemaId(schemaId).ifPresent(service -> {
+            serviceRepository.findFirstBySchemaMetadataId(schemaId).ifPresent(service -> {
                 service.setStatus(ServiceDefinition.ServiceStatus.DEPLOYMENT_FAILED);
                 serviceRepository.save(service);
             });
@@ -139,7 +141,7 @@ public class ServiceDeploymentService {
         SchemaMetadata schema = schemaRepository.findById(schemaId)
             .orElseThrow(() -> new IllegalArgumentException("Schema not found: " + schemaId));
 
-        ServiceDefinition service = serviceRepository.findFirstBySchemaId(schemaId)
+        ServiceDefinition service = serviceRepository.findFirstBySchemaMetadataId(schemaId)
             .orElse(null);
 
         if (service == null) {
@@ -195,7 +197,7 @@ public class ServiceDeploymentService {
         SchemaMetadata schema = schemaRepository.findById(schemaId)
             .orElseThrow(() -> new IllegalArgumentException("Schema not found: " + schemaId));
 
-        ServiceDefinition service = serviceRepository.findFirstBySchemaId(schemaId)
+        ServiceDefinition service = serviceRepository.findFirstBySchemaMetadataId(schemaId)
             .orElse(null);
 
         DeploymentStatus status = new DeploymentStatus();
@@ -218,39 +220,61 @@ public class ServiceDeploymentService {
 
     /**
      * Finds root classes from compiled output that should be exposed as services.
-     * These are typically classes annotated with @XmlRootElement.
+     * These are typically classes annotated with @XmlRootElement or referenced in ObjectFactory with @XmlElementDecl.
      */
     private Set<Class<?>> findRootClasses(SchemaMetadata schema, ClassLoader classLoader) {
         Set<Class<?>> rootClasses = new java.util.HashSet<>();
 
         try {
-            // Parse generated class names from schema metadata
-            // In a real implementation, this would scan the class output directory
-            // and identify classes with @XmlRootElement annotation
             String packageName = schema.getPackageName();
-
-            // For now, we'll use a simple heuristic:
-            // Look for classes in the package that have @XmlRootElement
             java.nio.file.Path classOutputPath = java.nio.file.Paths.get(schema.getClassOutputPath());
 
-            if (java.nio.file.Files.exists(classOutputPath)) {
-                java.nio.file.Files.walk(classOutputPath)
-                    .filter(path -> path.toString().endsWith(".class"))
-                    .forEach(classFile -> {
-                        try {
-                            String className = getClassNameFromFile(classOutputPath, classFile, packageName);
-                            Class<?> clazz = classLoader.loadClass(className);
-
-                            // Check if class has @XmlRootElement annotation
-                            if (clazz.isAnnotationPresent(jakarta.xml.bind.annotation.XmlRootElement.class)) {
-                                rootClasses.add(clazz);
-                                log.debug("Found root class: {}", className);
-                            }
-                        } catch (Exception e) {
-                            log.warn("Failed to load class from file: {}", classFile, e);
-                        }
-                    });
+            if (!java.nio.file.Files.exists(classOutputPath)) {
+                return rootClasses;
             }
+
+            // First, try to find ObjectFactory and extract root elements from @XmlElementDecl
+            try {
+                String objectFactoryClass = packageName + ".ObjectFactory";
+                Class<?> objectFactory = classLoader.loadClass(objectFactoryClass);
+
+                // Get all methods annotated with @XmlElementDecl
+                for (java.lang.reflect.Method method : objectFactory.getDeclaredMethods()) {
+                    if (method.isAnnotationPresent(jakarta.xml.bind.annotation.XmlElementDecl.class)) {
+                        // The return type is JAXBElement<T>, extract T
+                        java.lang.reflect.Type returnType = method.getGenericReturnType();
+                        if (returnType instanceof java.lang.reflect.ParameterizedType) {
+                            java.lang.reflect.ParameterizedType paramType = (java.lang.reflect.ParameterizedType) returnType;
+                            java.lang.reflect.Type[] typeArgs = paramType.getActualTypeArguments();
+                            if (typeArgs.length > 0 && typeArgs[0] instanceof Class) {
+                                Class<?> rootClass = (Class<?>) typeArgs[0];
+                                rootClasses.add(rootClass);
+                                log.debug("Found root class from ObjectFactory: {}", rootClass.getName());
+                            }
+                        }
+                    }
+                }
+            } catch (ClassNotFoundException e) {
+                log.debug("No ObjectFactory found for package: {}", packageName);
+            }
+
+            // Also scan for classes with @XmlRootElement (less common with xjc)
+            java.nio.file.Files.walk(classOutputPath)
+                .filter(path -> path.toString().endsWith(".class"))
+                .forEach(classFile -> {
+                    try {
+                        String className = getClassNameFromFile(classOutputPath, classFile, packageName);
+                        Class<?> clazz = classLoader.loadClass(className);
+
+                        // Check if class has @XmlRootElement annotation
+                        if (clazz.isAnnotationPresent(jakarta.xml.bind.annotation.XmlRootElement.class)) {
+                            rootClasses.add(clazz);
+                            log.debug("Found root class with @XmlRootElement: {}", className);
+                        }
+                    } catch (Exception e) {
+                        log.warn("Failed to load class from file: {}", classFile, e);
+                    }
+                });
 
         } catch (Exception e) {
             log.error("Failed to find root classes for schema: {}", schema.getServiceName(), e);
@@ -273,14 +297,14 @@ public class ServiceDeploymentService {
      * Creates or updates service definition entity.
      */
     private ServiceDefinition createOrUpdateServiceDefinition(SchemaMetadata schema) {
-        return serviceRepository.findFirstBySchemaId(schema.getId())
+        return serviceRepository.findFirstBySchemaMetadataId(schema.getId())
             .map(existing -> {
                 existing.setStatus(ServiceDefinition.ServiceStatus.DEPLOYING);
                 return existing;
             })
             .orElseGet(() -> {
                 ServiceDefinition newService = new ServiceDefinition();
-                newService.setSchemaId(schema.getId());
+                newService.setSchemaMetadata(schema);
                 newService.setServiceName(schema.getServiceName());
                 newService.setVersion(schema.getVersion());
                 newService.setStatus(ServiceDefinition.ServiceStatus.DEPLOYING);

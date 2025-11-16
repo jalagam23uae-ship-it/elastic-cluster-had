@@ -76,7 +76,7 @@ public class SchemaMetadata {
     @Column
     private String classOutputPath;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "generated_pojos", joinColumns = @JoinColumn(name = "schema_id"))
     @Column(name = "pojo_class_name")
     @Builder.Default

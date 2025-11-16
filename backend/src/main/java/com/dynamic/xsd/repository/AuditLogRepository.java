@@ -20,13 +20,27 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, String> {
 
     List<AuditLog> findByUsername(String username);
 
+    Page<AuditLog> findByUsername(String username, Pageable pageable);
+
     List<AuditLog> findByAction(AuditAction action);
+
+    Page<AuditLog> findByAction(AuditAction action, Pageable pageable);
 
     List<AuditLog> findByStatus(AuditStatus status);
 
     List<AuditLog> findByServiceName(String serviceName);
 
     Page<AuditLog> findAllByOrderByTimestampDesc(Pageable pageable);
+
+    Page<AuditLog> findByStatusOrderByTimestampDesc(AuditStatus status, Pageable pageable);
+
+    List<AuditLog> findByTimestampBetween(LocalDateTime start, LocalDateTime end);
+
+    List<AuditLog> findByTimestampBefore(LocalDateTime timestamp);
+
+    Long countByUsername(String username);
+
+    Long countByUsernameAndStatus(String username, AuditStatus status);
 
     @Query("SELECT a FROM AuditLog a WHERE a.timestamp >= :since ORDER BY a.timestamp DESC")
     List<AuditLog> findRecentLogs(LocalDateTime since);

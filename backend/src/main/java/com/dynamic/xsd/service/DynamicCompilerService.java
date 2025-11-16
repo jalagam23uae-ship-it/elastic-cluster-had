@@ -8,6 +8,9 @@ import org.springframework.stereotype.Service;
 import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -170,6 +173,8 @@ public class DynamicCompilerService {
 
     /**
      * Builds classpath for compilation.
+     * Includes all runtime dependencies needed by generated classes.
+     * For Spring Boot, extracts JARs from BOOT-INF/lib temporarily.
      */
     private String buildClasspath(Path outputDir) {
         List<String> classpathEntries = new ArrayList<>();
@@ -177,13 +182,90 @@ public class DynamicCompilerService {
         // Add output directory
         classpathEntries.add(outputDir.toString());
 
-        // Add current classpath
-        String currentClasspath = System.getProperty("java.class.path");
-        if (currentClasspath != null) {
-            classpathEntries.add(currentClasspath);
+        // For Spring Boot fat JARs, we need to extract dependencies from BOOT-INF/lib
+        // because Java compiler cannot read from nested JARs
+        try {
+            // Get the application's JAR file
+            String mainJar = System.getProperty("java.class.path");
+            if (mainJar != null && mainJar.endsWith(".jar")) {
+                Path jarPath = Paths.get(mainJar);
+                if (Files.exists(jarPath)) {
+                    log.debug("Checking Spring Boot JAR: {}", jarPath);
+
+                    // Extract required JARs from BOOT-INF/lib/
+                    Path tempLibDir = Paths.get(System.getProperty("java.io.tmpdir"), "xsd-platform-libs");
+                    Files.createDirectories(tempLibDir);
+
+                    String[] requiredDependencies = {
+                        "jackson-annotations",
+                        "jackson-databind",
+                        "jackson-core",
+                        "jakarta.xml.bind-api",
+                        "jakarta.activation-api",
+                        "jaxb-runtime",
+                        "jaxb-core",
+                        "txw2",
+                        "istack-commons-runtime",
+                        "lombok"
+                    };
+
+                    // Extract JARs from Spring Boot fat JAR
+                    extractBootInfLibs(jarPath, tempLibDir, requiredDependencies, classpathEntries);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to extract BOOT-INF/lib JARs: {}", e.getMessage());
         }
 
+        // Log classpath for debugging
+        log.info("Compilation classpath entries: {}", classpathEntries.size());
+        classpathEntries.forEach(entry -> log.info("Classpath entry: {}", entry));
+
         return String.join(File.pathSeparator, classpathEntries);
+    }
+
+    /**
+     * Extracts required JARs from Spring Boot fat JAR's BOOT-INF/lib directory.
+     */
+    private void extractBootInfLibs(Path jarPath, Path tempLibDir, String[] requiredDeps, List<String> classpathEntries) {
+        try (java.util.zip.ZipFile zipFile = new java.util.zip.ZipFile(jarPath.toFile())) {
+            java.util.Enumeration<? extends java.util.zip.ZipEntry> entries = zipFile.entries();
+
+            while (entries.hasMoreElements()) {
+                java.util.zip.ZipEntry entry = entries.nextElement();
+                String entryName = entry.getName();
+
+                // Check if this entry is a JAR in BOOT-INF/lib/
+                if (entryName.startsWith("BOOT-INF/lib/") && entryName.endsWith(".jar")) {
+                    String jarName = entryName.substring(13); // Remove "BOOT-INF/lib/" prefix
+
+                    // Check if this is one of our required dependencies
+                    for (String requiredDep : requiredDeps) {
+                        if (jarName.startsWith(requiredDep)) {
+                            Path extractedJar = tempLibDir.resolve(jarName);
+
+                            // Extract only if not already extracted
+                            if (!Files.exists(extractedJar)) {
+                                try (java.io.InputStream is = zipFile.getInputStream(entry);
+                                     java.io.FileOutputStream fos = new java.io.FileOutputStream(extractedJar.toFile())) {
+                                    byte[] buffer = new byte[8192];
+                                    int bytesRead;
+                                    while ((bytesRead = is.read(buffer)) != -1) {
+                                        fos.write(buffer, 0, bytesRead);
+                                    }
+                                    log.debug("Extracted JAR: {}", jarName);
+                                }
+                            }
+
+                            classpathEntries.add(extractedJar.toString());
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to extract JARs from BOOT-INF/lib", e);
+        }
     }
 
     /**

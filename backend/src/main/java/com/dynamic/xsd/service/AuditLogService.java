@@ -186,7 +186,7 @@ public class AuditLogService {
         return auditLogRepository.findByStatusOrderByTimestampDesc(
             AuditLog.AuditStatus.FAILED,
             org.springframework.data.domain.PageRequest.of(0, limit)
-        );
+        ).getContent();
     }
 
     /**

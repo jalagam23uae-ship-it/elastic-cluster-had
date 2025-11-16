@@ -1,7 +1,7 @@
 package com.dynamic.xsd.repository;
 
 import com.dynamic.xsd.domain.entity.User;
-import com.dynamic.xsd.domain.entity.User.UserRole;
+import com.dynamic.xsd.domain.enums.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

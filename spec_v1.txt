@@ -1,0 +1,1664 @@
+built with Java 21, Spring Boot 3.x, WebFlux, R2DBC, PostgreSQL, Woodstox XML, WEB SERVICE CXF,and OpenAPI/Swagger. and FRONTEND REACT JS Dynamic Flow Architecture Upload Phase
+
+REST endpoint receives XSD file Validate and store XSD temporarily or persistently Parse XSD using JAXB Schema Compiler APIs
+
+Generation Phase
+
+Use JAXB XJC programmatically to generate Java source code from XSD Generate source files to temporary directory Create corresponding Spring REST controllers dynamically Generate SOAP service endpoints and WSDL dynamically
+
+Compilation Phase
+
+Use Java Compiler API (javax.tools.JavaCompiler) Compile generated sources in-memory or to filesystem Handle compilation errors and report back
+
+Loading Phase
+
+Use custom ClassLoader to load compiled classes Register classes with Spring context dynamically Register REST endpoints using RequestMappingHandlerMapping Register SOAP endpoints using Spring WS dynamic endpoint registration
+
+Exposure Phase
+
+REST API: Dynamically registered endpoints become immediately available SOAP Service: WSDL generated and exposed dynamically Both can serialize/deserialize using the generated POJOs
+
+Key Technical Components Needed
+
+JAXB XJC API - Java source generation from XSD Java Compiler API - Runtime compilation Custom ClassLoader - Dynamic class loading Spring RequestMappingHandlerMapping - Dynamic REST endpoint registration Spring WS Dynamic Endpoints - SOAP service registration Woodstox - High-performance XML parsing/validation
+
+Challenges to Consider
+
+Memory Management - Generated classes stay in memory ClassLoader Lifecycle - Proper cleanup needed to avoid memory leaks Concurrency - Multiple simultaneous uploads need proper handling Security - XSD validation to prevent malicious schemas Versioning - Managing multiple versions of same service Hot Reloading - Updating services without restart
+
+This is a complete dynamic service generation platform - complex but very powerful for scenarios like B2B integration platforms, API gateways, or multi-tenant systems where service definitions come from clients. Would you like me to provide the complete implementation?RetrySSpring boot reset api and soap also ?Yes, absolutely both REST API and SOAP services can be generated dynamically in the same Spring Boot application from uploaded XSD files. Architecture Overview Single XSD Upload → Dual Exposure XSD Upload ↓ Parse & Generate POJOs ↓ Compile Classes ↓ ├→ REST API Endpoints (JSON/XML) └→ SOAP Web Services (XML + WSDL) What Gets Generated Dynamically
+
+REST API Side POJO classes with Jackson annotations REST Controllers with @RestController CRUD endpoints (POST, GET, PUT, DELETE) Request/Response mapping JSON and XML support OpenAPI/Swagger documentation
+
+SOAP Service Side POJO classes with JAXB annotations SOAP Endpoints with @Endpoint WSDL generation Request/Response SOAP messages WS-Security support (optional) Service registry
+
+Spring Boot Support Spring Boot 3.x provides:
+
+Spring Web - REST API framework Spring Web Services - SOAP framework Both can coexist in same application Share same POJOs with proper annotations Use Woodstox as common XML processor
+
+Dual Annotation Strategy Generated POJOs will have:
+
+@XmlRootElement, @XmlElement - for JAXB/SOAP @JsonProperty - for Jackson/REST Both annotations work together seamlessly
+
+Use Cases
+
+Legacy Integration - SOAP for old systems, REST for modern clients Multi-Protocol Gateway - Same service, multiple protocols B2B Platforms - Partners upload their schemas Enterprise Service Bus - Dynamic service routing API Management - On-demand service creation
+
+Technical Benefits
+
+Single Source of Truth - One XSD defines both Consistent Data Model - Same POJOs for both protocols Reduced Maintenance - Update XSD, both services update Protocol Flexibility - Clients choose their preferred protocol
+
+This is a complete dynamic multi-protocol service generation platform. Would you like the full implementation with both REST and SOAP generation working together?RetrySRest api accept JSON and xml ?Yes, absolutely! The dynamically generated REST API can accept both JSON and XML in the same endpoints. How It Works Content Negotiation Spring Boot automatically handles both formats based on:
+
+Content-Type header (request) Accept header (response)
+
+Request Examples JSON Request: POST /api/customer Content-Type: application/json Accept: application/json
+
+{ "name": "John", "email": "john@example.com" } XML Request: POST /api/customer Content-Type: application/xml Accept: application/xml
+
+<customer><name>John</name><email>john@example.com</email></customer> POJO Annotations for Dual Support Generated POJOs will have both:
+
+Jackson annotations (JSON) - @JsonProperty, @JsonRootName JAXB annotations (XML) - @XmlRootElement, @XmlElement
+
+Spring Boot Configuration Automatic Support via:
+
+Jackson - JSON serialization/deserialization JAXB - XML serialization/deserialization MappingJackson2HttpMessageConverter - JSON converter Jaxb2RootElementHttpMessageConverter - XML converter
+
+Benefits
+
+Same Endpoint - /api/customer handles both formats Client Choice - Client decides format via headers No Code Duplication - Same controller, same logic Automatic Conversion - Spring handles everything
+
+Three Service Types from One XSD Single XSD Upload ↓ ├→ REST API (JSON) ├→ REST API (XML) └→ SOAP Service (XML + WSDL) All three work simultaneously with the same POJOs! So you get maximum flexibility: Modern clients use REST+JSON, legacy systems use REST+XML or SOAP, all from one dynamically uploaded XSD. Ready for the complete implementation?RetrySCan u create backend functionality specifications ?Backend Functionality Specifications: Dynamic XSD-to-Service Generation Platform
+
+System Overview 1.1 Purpose A Spring Boot 3.x application that dynamically generates REST APIs and SOAP Web Services from uploaded XSD schemas, supporting JSON and XML formats for REST endpoints. 1.2 Technology Stack Java 21 Spring Boot 3.x Spring Web (REST API) Spring Web Services (SOAP) JAXB (XML Binding) Jackson (JSON Processing) Woodstox (XML Parsing/Validation) Java Compiler API (Runtime Compilation) Maven/Gradle (Build Tool)
+
+Core Functional Requirements 2.1 XSD Upload & Management 2.1.1 XSD Upload Endpoint Endpoint: POST /api/schema/upload Content-Type: multipart/form-data Request Parameters:
+
+file: XSD file (required) namespace: Target namespace (optional, extracted from XSD if not provided) serviceName: Service identifier (required, unique) version: Schema version (optional, defaults to "1.0") description: Service description (optional)
+
+2.1.2 XSD Validation
+
+Validate XSD syntax and structure Check for circular dependencies Validate namespace declarations Verify XSD schema version compatibility Maximum file size limit (configurable, default 5MB) Supported XSD versions: 1.0, 1.1
+
+2.1.3 XSD Storage
+
+Store XSD files in configurable location (filesystem/database) Maintain metadata:
+
+Upload timestamp Uploader information Schema namespace Service name and version Status (UPLOADED, PROCESSING, ACTIVE, FAILED, DEPRECATED) Generated artifacts location
+
+2.1.4 XSD Retrieval
+
+Endpoint: GET /api/schema/{serviceName} Endpoint: GET /api/schema/{serviceName}/version/{version} Returns XSD content and metadata
+
+2.1.5 XSD Listing
+
+Endpoint: GET /api/schema/list Query Parameters:
+
+status: Filter by status page, size: Pagination sort: Sorting criteria
+
+Returns list of all uploaded schemas with metadata
+
+2.1.6 XSD Deletion
+
+Endpoint: DELETE /api/schema/{serviceName} Soft delete (mark as DEPRECATED) Unregister associated endpoints Clean up generated artifacts Unload classes from classloader
+
+2.2 Dynamic POJO Generation 2.2.1 JAXB Code Generation
+
+Use JAXB XJC API programmatically Generate Java source files from XSD Target directory: {temp}/generated-sources/{serviceName} Package naming convention: com.generated.{serviceName}.model
+
+2.2.2 Annotation Enhancement
+
+Add JAXB annotations: @XmlRootElement, @XmlElement, @XmlAttribute Add Jackson annotations: @JsonProperty, @JsonRootName, @JsonIgnoreProperties Add validation annotations: @NotNull, @Size, @Pattern (from XSD constraints) Add Lombok annotations: @Data, @Builder, @NoArgsConstructor, @AllArgsConstructor
+
+2.2.3 Generated Class Features
+
+Getters and setters Default constructors Builder pattern support toString(), equals(), hashCode() methods Serializable interface implementation
+
+2.2.4 Custom Bindings Support
+
+Support JAXB bindings file for customization Allow custom naming strategies Support for custom type adapters
+
+2.3 Runtime Compilation 2.3.1 Java Compiler API Integration
+
+Compile generated Java sources in-memory Use javax.tools.JavaCompiler Diagnostic collection for error reporting Support for compilation options (target version, encoding)
+
+2.3.2 Compilation Output
+
+Store compiled .class files Location: {temp}/generated-classes/{serviceName} Maintain source-to-class mapping
+
+2.3.3 Error Handling
+
+Collect compilation errors and warnings Report line numbers and error messages Rollback on compilation failure Clean up partial artifacts
+
+2.3.4 Dependency Management
+
+Handle class dependencies Resolve imports automatically Support for nested complex types
+
+2.4 Dynamic Class Loading 2.4.1 Custom ClassLoader Implementation
+
+Create isolated classloader per service Parent-last delegation model Prevent class conflicts between services Support for class reloading
+
+2.4.2 Class Registration
+
+Load compiled classes into memory Register with Spring application context Cache loaded classes for performance Track loaded classes per service
+
+2.4.3 ClassLoader Lifecycle Management
+
+Create on service deployment Destroy on service removal Prevent memory leaks Proper garbage collection handling
+
+2.4.4 Version Management
+
+Support multiple versions simultaneously Isolated classloaders per version Version-specific routing
+
+2.5 Dynamic REST API Generation 2.5.1 REST Controller Generation
+
+Generate @RestController classes dynamically Base path: /api/{serviceName} Version path: /api/v{version}/{serviceName}
+
+2.5.2 CRUD Endpoints Auto-Generation For each root element in XSD, generate: Create Operation:
+
+Endpoint: POST /api/{serviceName}/{entityName} Consumes: application/json, application/xml Produces: application/json, application/xml Request Body: Entity POJO Response: Created entity with HTTP 201
+
+Read Operation:
+
+Endpoint: GET /api/{serviceName}/{entityName}/{id} Produces: application/json, application/xml Response: Entity POJO or HTTP 404
+
+List Operation:
+
+Endpoint: GET /api/{serviceName}/{entityName} Query Parameters: page, size, sort Produces: application/json, application/xml Response: List of entities
+
+Update Operation:
+
+Endpoint: PUT /api/{serviceName}/{entityName}/{id} Consumes: application/json, application/xml Produces: application/json, application/xml Request Body: Entity POJO Response: Updated entity or HTTP 404
+
+Patch Operation:
+
+Endpoint: PATCH /api/{serviceName}/{entityName}/{id} Consumes: application/json, application/xml Response: Updated entity or HTTP 404
+
+Delete Operation:
+
+Endpoint: DELETE /api/{serviceName}/{entityName}/{id} Response: HTTP 204 or HTTP 404
+
+2.5.3 Content Negotiation
+
+Support Content-Type header for requests Support Accept header for responses Automatic conversion between JSON and XML Default to JSON if not specified
+
+2.5.4 Request/Response Handling
+
+Automatic serialization/deserialization Jackson for JSON processing JAXB for XML processing Validation using Bean Validation API Custom exception handling
+
+2.5.5 Dynamic Endpoint Registration
+
+Use RequestMappingHandlerMapping for registration Register endpoints at runtime Update endpoint mappings dynamically Support endpoint versioning
+
+2.5.6 OpenAPI/Swagger Documentation
+
+Auto-generate OpenAPI 3.0 specification Document all generated endpoints Include request/response schemas Endpoint: GET /api/docs/{serviceName} Swagger UI available at: /swagger-ui/{serviceName}
+
+2.6 Dynamic SOAP Service Generation 2.6.1 SOAP Endpoint Generation
+
+Generate @Endpoint classes dynamically Base namespace from XSD SOAP action from operation name
+
+2.6.2 WSDL Generation
+
+Auto-generate WSDL from XSD WSDL location: /ws/{serviceName}?wsdl Include all operations from XSD Support SOAP 1.1 and 1.2
+
+2.6.3 SOAP Operations Auto-Generation For each element in XSD, generate: Request/Response Pattern:
+
+Operation name from element name Request message wrapper Response message wrapper Fault messages for errors
+
+2.6.4 Message Handling
+
+Use @PayloadRoot for routing Automatic request unmarshalling (XML to POJO) Automatic response marshalling (POJO to XML) SOAP fault generation for errors
+
+2.6.5 Dynamic Endpoint Registration
+
+Use Spring WS endpoint registry Register endpoints at runtime Support for multiple namespaces Version-specific endpoints
+
+2.6.6 WS-Security Support (Optional)
+
+Username token authentication Timestamp validation Message encryption/signing Configurable security policies
+
+2.6.7 SOAP Testing Interface
+
+SoapUI project generation Test request templates Endpoint: GET /ws/{serviceName}/soapui-project
+
+2.7 Data Persistence Layer 2.7.1 Storage Strategy
+
+In-memory storage (default for POC) Database storage (optional, configurable) Support for multiple storage backends
+
+2.7.2 Repository Generation
+
+Generate Spring Data JPA repositories dynamically Support basic CRUD operations Custom query methods based on XSD attributes Transaction management
+
+2.7.3 Database Schema Generation
+
+Auto-generate database tables from XSD Map XSD types to database types Handle relationships (one-to-many, many-to-many) Support for primary keys and indexes
+
+2.7.4 Data Validation
+
+XSD constraint validation Database constraint validation Custom validation rules Validation error reporting
+
+2.8 Service Management 2.8.1 Service Deployment
+
+Endpoint: POST /api/management/deploy/{serviceName} Trigger service generation and deployment Status tracking (DEPLOYING, DEPLOYED, FAILED) Asynchronous processing support
+
+2.8.2 Service Status
+
+Endpoint: GET /api/management/status/{serviceName} Return current service status Include deployment timestamp Show active endpoints (REST and SOAP) Performance metrics
+
+2.8.3 Service Health Check
+
+Endpoint: GET /api/management/health/{serviceName} Verify service availability Check endpoint responsiveness Return health status
+
+2.8.4 Service Undeploy
+
+Endpoint: POST /api/management/undeploy/{serviceName} Unregister endpoints Unload classes Clean up resources Update status to UNDEPLOYED
+
+2.8.5 Service Update
+
+Endpoint: PUT /api/management/update/{serviceName} Upload new XSD version Hot-reload service without downtime Maintain backward compatibility option
+
+2.8.6 Service List
+
+Endpoint: GET /api/management/services List all deployed services Include metadata and status Filter and search capabilities
+
+2.9 Error Handling & Logging 2.9.1 Error Response Format REST API: json{ "timestamp": "2025-11-14T10:30:00Z", "status": 400, "error": "Bad Request", "message": "Validation failed", "path": "/api/customer/create", "errors": [ { "field": "email", "message": "Invalid email format" } ] } SOAP Fault: xmlsoap:Fault <faultcode>soap:Client</faultcode> <faultstring>Validation Error</faultstring> <detail> <message>Invalid email format</message> </detail> </soap:Fault> 2.9.2 Error Categories
+
+XSD Validation Errors (400) Compilation Errors (500) Class Loading Errors (500) Endpoint Registration Errors (500) Business Validation Errors (400) Not Found Errors (404) Conflict Errors (409) Internal Server Errors (500)
+
+2.9.3 Logging Requirements
+
+Log all XSD uploads Log compilation process and results Log endpoint registration/deregistration Log all service invocations Log errors with stack traces Support different log levels (DEBUG, INFO, WARN, ERROR) Structured logging (JSON format)
+
+2.9.4 Audit Trail
+
+Track who uploaded XSD Track service lifecycle changes Track all API calls Timestamp all events Store audit logs persistently
+
+2.10 Security & Access Control 2.10.1 Authentication
+
+Support JWT token authentication API key authentication for services Basic authentication support OAuth2 integration (optional)
+
+2.10.2 Authorization
+
+Role-based access control (RBAC) Roles: ADMIN, DEVELOPER, USER Permission levels:
+
+ADMIN: All operations DEVELOPER: Upload, deploy, manage schemas USER: Read-only access, invoke services
+
+2.10.3 Service-Level Security
+
+Per-service access control API rate limiting IP whitelisting/blacklisting Request throttling
+
+2.10.4 XSD Validation Security
+
+Prevent XXE (XML External Entity) attacks Prevent XML bomb attacks File size limits Malicious content scanning Schema complexity limits
+
+2.11 Monitoring & Metrics 2.11.1 Performance Metrics
+
+Request/response times Throughput (requests per second) Error rates Success rates Compilation times Deployment times
+
+2.11.2 System Metrics
+
+Memory usage per service CPU usage Active classloaders count Loaded classes count Thread pool statistics
+
+2.11.3 Metrics Endpoints
+
+Endpoint: GET /actuator/metrics Endpoint: GET /actuator/metrics/{serviceName} Prometheus format support Grafana dashboard integration
+
+2.11.4 Alerting
+
+High error rate alerts Memory leak detection Service failure alerts Slow response time alerts
+
+2.12 Configuration Management 2.12.1 Application Configuration yamldynamic-service: xsd: storage-path: /var/lib/xsd-store max-file-size: 5MB validation-enabled: true
+
+compilation: temp-directory: /tmp/dynamic-compile keep-sources: true java-version: 21
+
+classloader: isolation-enabled: true parent-first: false
+
+rest: base-path: /api versioning-enabled: true default-page-size: 20 max-page-size: 100
+
+soap: base-path: /ws wsdl-enabled: true soap-version: 1.2
+
+storage: type: in-memory # or database database: auto-ddl: create-update
+
+security: enabled: true rate-limit: 100/minute
+
+monitoring: metrics-enabled: true audit-enabled: true 2.12.2 Service-Specific Configuration
+
+Per-service timeout settings Per-service rate limits Custom validation rules Custom type mappings
+
+2.13 Testing Support 2.13.1 Test Data Generation
+
+Endpoint: POST /api/test/generate-sample/{serviceName} Generate sample JSON/XML from XSD Generate valid and invalid samples Support for edge cases
+
+2.13.2 Service Testing Interface
+
+Endpoint: GET /api/test/playground/{serviceName} Interactive API testing UI Request builder Response viewer History tracking
+
+2.13.3 Load Testing Support
+
+Generate JMeter test plans Generate Gatling test scenarios Performance baseline establishment
+
+2.14 Documentation & Discovery 2.14.1 API Catalog
+
+Endpoint: GET /api/catalog List all available services Include endpoints, schemas, examples Search functionality
+
+2.14.2 Service Documentation
+
+Endpoint: GET /api/docs/{serviceName} Auto-generated documentation Request/response examples Error code reference Version history
+
+2.14.3 Schema Registry
+
+Endpoint: GET /api/registry Browse all registered schemas Schema dependencies Schema evolution history
+
+Non-Functional Requirements 3.1 Performance XSD upload and processing < 5 seconds Compilation time < 10 seconds for average schema Endpoint registration < 2 seconds API response time < 200ms (95th percentile) Support 100+ concurrent services Handle 1000+ requests per second per service
+
+3.2 Scalability
+
+Horizontal scaling support Stateless service design Distributed cache support (Redis) Load balancing ready
+
+3.3 Reliability
+
+99.9% uptime target Graceful degradation Circuit breaker pattern Retry mechanisms Failover support
+
+3.4 Maintainability
+
+Clean code architecture Comprehensive logging Health checks Self-healing capabilities Easy debugging
+
+3.5 Portability
+
+Docker containerization Kubernetes deployment support Cloud-agnostic design Environment configuration externalization
+
+API Summary 4.1 Schema Management APIs MethodEndpointDescriptionPOST/api/schema/uploadUpload XSD fileGET/api/schema/{serviceName}Get XSD contentGET/api/schema/listList all schemasDELETE/api/schema/{serviceName}Delete schema 4.2 Service Management APIs MethodEndpointDescriptionPOST/api/management/deploy/{serviceName}Deploy servicePOST/api/management/undeploy/{serviceName}Undeploy serviceGET/api/management/status/{serviceName}Service statusGET/api/management/health/{serviceName}Health checkGET/api/management/servicesList services 4.3 Dynamic REST APIs (Per Service) MethodEndpointDescriptionPOST/api/{service}/{entity}Create entityGET/api/{service}/{entity}/{id}Get entityGET/api/{service}/{entity}List entitiesPUT/api/{service}/{entity}/{id}Update entityPATCH/api/{service}/{entity}/{id}Partial updateDELETE/api/{service}/{entity}/{id}Delete entity 4.4 Dynamic SOAP Services (Per Service) EndpointDescription/ws/{serviceName}SOAP endpoint/ws/{serviceName}?wsdlWSDL definition
+
+Data Models 5.1 Schema Metadata json{ "id": "uuid", "serviceName": "customer-service", "version": "1.0", "namespace": "http://example.com/customer", "description": "Customer management service", "status": "ACTIVE", "uploadedBy": "user@example.com", "uploadedAt": "2025-11-14T10:00:00Z", "xsdContent": "base64-encoded-content", "generatedArtifacts": { "pojos": ["Customer", "Address"], "restEndpoints": [...], "soapOperations": [...] } } 5.2 Service Status json{ "serviceName": "customer-service", "status": "DEPLOYED", "deployedAt": "2025-11-14T10:05:00Z", "endpoints": { "rest": { "baseUrl": "/api/customer-service", "operations": [...] }, "soap": { "wsdlUrl": "/ws/customer-service?wsdl", "operations": [...] } }, "metrics": { "totalRequests": 1000, "successRate": 99.5, "avgResponseTime": 150 } }
+
+6. Deployment Architecture
+6.1 Component Diagram
+┌─────────────────────────────────────────┐ │ Spring Boot Application │ ├─────────────────────────────────────────┤ │ ┌───────────┐ ┌──────────────────┐ │ │ │ Schema │ │ Service │ │ │ │ Manager │ │ Registry │ │ │ └───────────┘ └──────────────────┘ │ │ ┌───────────┐ ┌──────────────────┐ │ │ │ POJO │ │ Dynamic │ │ │ │ Generator │ │ Compiler │ │ │ └───────────┘ └──────────────────┘ │ │ ┌───────────┐ ┌──────────────────┐ │ │ │ REST API │ │ SOAP Service │ │ │ │ Generator │ │ Generator │ │ │ └───────────┘ └──────────────────┘ │ │ ┌───────────────────────────────────┐ │ │ │ Custom ClassLoader Manager │ │ │ └───────────────────────────────────┘ │ └─────────────────────────────────────────┘ 6.2 Deployment Options
+
+Standalone JAR deployment Docker container deployment Kubernetes deployment with auto-scaling Cloud platform deployment (AWS, Azure, GCP)
+
+Future Enhancements 7.1 Phase 2 Features GraphQL API generation gRPC service generation Async messaging support (Kafka, RabbitMQ) Schema versioning and migration Multi-tenancy support Advanced caching strategies
+
+7.2 Phase 3 Features
+
+AI-powered schema optimization Automatic API testing Service mesh integration Advanced analytics and insights Marketplace for schema templates
+
+Success Criteria Successfully upload and parse XSD files Generate POJOs with dual annotations (JAXB + Jackson) Compile and load classes dynamically Expose working REST endpoints (JSON + XML) Expose working SOAP services with WSDL Handle concurrent requests reliably Maintain service isolation Provide comprehensive error handling Support service lifecycle management Achieve performance targets
+
+End of SpecificationsRetrySCreate backend and frontend specification Ai promptAI Prompt: Complete Backend & Frontend Specifications for Dynamic XSD-to-Service Generation Platform
+
+🎯 Project Context You are an expert software architect tasked with creating comprehensive technical specifications for a dynamic service generation platform. This platform allows users to upload XSD (XML Schema Definition) files and automatically generates:
+
+REST APIs (supporting both JSON and XML) SOAP Web Services (with WSDL) Dynamic POJOs (Java classes) Admin UI for management Developer Portal for API consumption
+
+All service generation happens at runtime without application restart.
+
+📋 Technology Stack Requirements Backend
+
+Java 21 Spring Boot 3.x Spring Web (REST APIs) Spring Web Services (SOAP) JAXB (XML binding) Jackson (JSON processing) Woodstox (XML parsing/validation) Java Compiler API (runtime compilation) Spring Data JPA (optional persistence) Spring Security (authentication/authorization) Maven/Gradle
+
+Frontend
+
+React 18+ or Angular 17+ or Vue 3+ TypeScript Tailwind CSS or Material UI or Ant Design Axios or Fetch API React Query or SWR (data fetching) React Router or equivalent Monaco Editor or CodeMirror (code editor) Chart.js or Recharts (metrics visualization)
+
+📝 Backend Specifications Requirements Create detailed backend specifications covering:
+
+System Architecture Component diagram Layer architecture (Controller → Service → Repository) Dynamic class loading architecture ClassLoader isolation strategy Service registry design
+
+API Specifications 2.1 Schema Management APIs Upload XSD file (multipart/form-data) Validate XSD syntax and structure Store XSD with metadata Retrieve XSD by service name List all schemas (with pagination, filtering, sorting) Delete/deprecate schema Version management
+
+2.2 Service Management APIs
+
+Deploy service (trigger generation) Undeploy service Update service (hot reload) Get service status Health check List all deployed services Service metrics and statistics
+
+2.3 Dynamic REST API Generation
+
+CRUD endpoint generation strategy Content negotiation (JSON/XML) Request/response mapping Validation handling Error handling and formatting OpenAPI/Swagger documentation generation
+
+2.4 Dynamic SOAP Service Generation
+
+SOAP endpoint generation WSDL generation Message handling (request/response) SOAP fault handling WS-Security support (optional)
+
+Core Components 3.1 XSD Parser & Validator XSD syntax validation Namespace extraction Complex type analysis Element and attribute parsing Security validation (XXE, XML bomb prevention)
+
+3.2 POJO Generator
+
+JAXB code generation using XJC API Annotation enhancement (JAXB + Jackson + Validation) Package naming convention Class structure and relationships Custom type mapping
+
+3.3 Dynamic Compiler
+
+Java Compiler API integration In-memory compilation Classpath management Error collection and reporting Compilation optimization
+
+3.4 ClassLoader Manager
+
+Custom classloader implementation Isolated classloading per service Class registration and caching Version management Memory leak prevention Cleanup and garbage collection
+
+3.5 REST Controller Generator
+
+Dynamic controller creation Endpoint mapping strategy Request handler methods Validation integration Exception handling Dynamic registration with Spring
+
+3.6 SOAP Endpoint Generator
+
+Dynamic endpoint creation PayloadRoot mapping Marshalling/unmarshalling WSDL generation Namespace handling
+
+Data Models Schema metadata entity Service status entity Deployment configuration Audit log entity User and role entities
+
+Security Authentication (JWT, OAuth2) Authorization (RBAC) API rate limiting XSD validation security Service-level access control
+
+Error Handling Error response format (REST) SOAP fault format Error categories and HTTP status codes Global exception handling Validation error mapping
+
+Logging & Monitoring Structured logging (JSON) Audit trail Performance metrics Health checks Alerting strategy
+
+Configuration Application properties structure Service-specific configuration Environment-based settings Feature flags
+
+Testing Strategy Unit testing approach Integration testing End-to-end testing Performance testing Test data generation
+
+Deployment Docker containerization Kubernetes deployment CI/CD pipeline Environment setup
+
+🎨 Frontend Specifications Requirements Create detailed frontend specifications covering:
+
+Application Architecture Component hierarchy State management strategy (Redux/Context/Zustand) Routing structure API integration layer Authentication flow
+
+User Roles & Permissions Admin: Full access (upload, deploy, manage, monitor) Developer: Upload, deploy, test services User: View and consume services only
+
+Page Specifications 3.1 Dashboard (Landing Page) Purpose: Overview of platform health and activity Components: Summary cards (total services, active services, total requests, success rate) Recent activity timeline Service status overview (pie chart) Quick actions (upload XSD, deploy service) System health indicators Request volume chart (last 24 hours)
+
+API Calls:
+
+GET /api/management/services (summary) GET /api/management/metrics (statistics) GET /api/audit/recent (activity log)
+
+UI Elements:
+
+Metric cards with icons Charts (line, pie, bar) Data tables with sorting Quick action buttons Refresh indicator
+
+3.2 Schema Management Page Purpose: Upload, view, and manage XSD schemas Sections: A. Upload Section
+
+Drag-and-drop file upload area File input with validation Form fields:
+
+Service Name (required, unique) Version (optional) Description (optional) Namespace (auto-extracted, editable)
+
+Real-time XSD validation feedback Preview XSD content Upload progress indicator Success/error notifications
+
+B. Schema List Section
+
+Data table with columns:
+
+Service Name Version Namespace Status (badge: UPLOADED, ACTIVE, FAILED, DEPRECATED) Uploaded By Upload Date Actions (View, Deploy, Download, Delete)
+
+Search and filter controls Pagination Bulk actions (delete multiple) Sort by columns
+
+C. Schema Detail Modal
+
+XSD content viewer (syntax highlighted) Metadata display Generated POJOs list Associated endpoints (REST/SOAP) Version history Download button Edit metadata option
+
+API Calls:
+
+POST /api/schema/upload (upload XSD) GET /api/schema/list (list all schemas) GET /api/schema/{serviceName} (get details) DELETE /api/schema/{serviceName} (delete schema) GET /api/schema/{serviceName}/pojos (generated classes)
+
+UI Components:
+
+File upload component Data table with pagination Modal dialog Code editor (Monaco/CodeMirror) Form with validation Toast notifications
+
+3.3 Service Management Page Purpose: Deploy, monitor, and manage services Sections: A. Service List
+
+Card-based layout or table view toggle Each service card shows:
+
+Service name and icon Status badge (DEPLOYED, DEPLOYING, FAILED, UNDEPLOYED) Version Deploy timestamp Total requests Success rate Avg response time Actions (Undeploy, Update, View Details, Test)
+
+Filter by status Search by name Sort options
+
+B. Service Detail Page/Modal
+
+Overview tab:
+
+Service metadata Status and health Performance metrics Resource usage
+
+Endpoints tab:
+
+REST endpoints list (with HTTP methods) SOAP operations list WSDL download link Swagger UI link Copy endpoint URL buttons
+
+Configuration tab:
+
+Timeout settings Rate limits Security settings Edit configuration form
+
+Logs tab:
+
+Real-time logs viewer Filter by level (INFO, WARN, ERROR) Search logs Download logs
+
+Metrics tab:
+
+Request volume chart Response time chart Error rate chart Success rate chart Time range selector
+
+C. Deployment Actions
+
+Deploy button (for uploaded schemas) Undeploy button with confirmation Update/Redeploy button Test service button (opens test interface)
+
+API Calls:
+
+GET /api/management/services (list services) POST /api/management/deploy/{serviceName} (deploy) POST /api/management/undeploy/{serviceName} (undeploy) GET /api/management/status/{serviceName} (status) GET /api/management/health/{serviceName} (health) GET /api/management/metrics/{serviceName} (metrics) GET /api/management/logs/{serviceName} (logs)
+
+UI Components:
+
+Service cards Tabs component Charts (line, area, bar) Real-time log viewer Status indicators Action buttons with confirmations Loading states
+
+3.4 API Testing Playground Purpose: Interactive testing interface for generated APIs Sections: A. Service Selector
+
+Dropdown to select service Endpoint selector (REST or SOAP) Operation/Method selector
+
+B. Request Builder (REST)
+
+HTTP Method selector (GET, POST, PUT, PATCH, DELETE) Endpoint URL display (editable path params) Headers section:
+
+Content-Type selector (application/json, application/xml) Accept selector Custom headers (key-value pairs)
+
+Query parameters builder Request body editor:
+
+JSON editor with syntax highlighting XML editor with syntax highlighting Format/Prettify button Validate button Sample data generator button
+
+Send button
+
+C. Request Builder (SOAP)
+
+SOAP operation selector SOAP envelope editor (XML) Sample request generator Send button
+
+D. Response Viewer
+
+Status code display (with color coding) Response headers display Response body viewer:
+
+JSON/XML syntax highlighting Pretty print Copy response button Download response button
+
+Response time indicator Response size indicator
+
+E. History Panel
+
+Recent requests list Click to restore request Clear history button Export history
+
+API Calls:
+
+GET /api/management/services (get services) GET /api/{service}/{entity} (example GET) POST /api/{service}/{entity} (example POST) POST /api/test/generate-sample/{serviceName} (sample data) SOAP endpoints dynamically
+
+UI Components:
+
+Dropdown selects Code editor (Monaco) Split panel (request/response) Tabs for headers/body Syntax highlighter Copy-to-clipboard buttons
+
+3.5 API Documentation Page Purpose: Browse generated API documentation Sections: A. Service Catalog
+
+List of all services Search and filter Click to view documentation
+
+B. Documentation Viewer
+
+Service overview REST API section:
+
+Endpoint list with descriptions Request/response schemas Example requests (JSON/XML) Example responses Error codes and meanings
+
+SOAP API section:
+
+WSDL viewer Operations list Message formats Sample SOAP requests
+
+Download options:
+
+OpenAPI spec (JSON/YAML) WSDL file Postman collection cURL examples
+
+C. Interactive Elements
+
+Try-it-out functionality Code examples in multiple languages Schema explorer
+
+API Calls:
+
+GET /api/catalog (service catalog) GET /api/docs/{serviceName} (documentation) GET /ws/{serviceName}?wsdl (WSDL) GET /api/docs/{serviceName}/openapi (OpenAPI spec)
+
+UI Components:
+
+Navigation sidebar Documentation renderer Code blocks with copy buttons Tabs for different sections Schema tree viewer
+
+3.6 Monitoring & Analytics Page Purpose: System-wide monitoring and analytics Sections: A. System Metrics
+
+Total requests (24h, 7d, 30d) Average response time Error rate Success rate Active services count Memory usage CPU usage Classloader statistics
+
+B. Service Performance Comparison
+
+Table comparing all services Columns: Service, Requests, Avg Response Time, Error Rate, Success Rate Sort by any column Export to CSV
+
+C. Request Timeline
+
+Interactive timeline chart Filter by service Filter by status (success/error) Time range selector Zoom controls
+
+D. Error Analysis
+
+Error breakdown by type Error trend chart Recent errors table with details Error rate by service
+
+E. Traffic Analysis
+
+Top endpoints by traffic Traffic distribution by service Peak hours analysis Geographic distribution (if available)
+
+API Calls:
+
+GET /actuator/metrics (system metrics) GET /api/management/analytics/requests (request data) GET /api/management/analytics/errors (error data) GET /api/management/analytics/performance (performance data)
+
+UI Components:
+
+Dashboard cards Line charts Bar charts Pie charts Data tables Time range selector Filter controls Export buttons
+
+3.7 User Management Page (Admin Only) Purpose: Manage users and permissions Sections: A. User List
+
+Table with columns:
+
+Username Email Role (ADMIN, DEVELOPER, USER) Status (ACTIVE, INACTIVE) Last Login Actions (Edit, Delete, Deactivate)
+
+Add User button Search users Filter by role
+
+B. Add/Edit User Modal
+
+Form fields:
+
+Username (required) Email (required) Password (required for new) Role selector Status toggle
+
+Submit button Cancel button
+
+C. Role Management
+
+List of roles Permissions matrix Edit permissions
+
+API Calls:
+
+GET /api/users (list users) POST /api/users (create user) PUT /api/users/{id} (update user) DELETE /api/users/{id} (delete user) GET /api/roles (list roles)
+
+UI Components:
+
+Data table Modal form Role selector Permission checkboxes Status toggle
+
+3.8 Settings Page Purpose: Application and user settings Sections: A. Application Settings (Admin Only)
+
+XSD upload settings:
+
+Max file size Allowed file types Storage path
+
+Compilation settings:
+
+Java version Temp directory Keep sources toggle
+
+REST API settings:
+
+Base path Default page size Max page size Versioning enabled
+
+SOAP settings:
+
+Base path SOAP version WS-Security enabled
+
+Security settings:
+
+Rate limit Session timeout API key expiration
+
+Monitoring settings:
+
+Metrics enabled Audit enabled Log level
+
+B. User Profile Settings
+
+Personal information Change password API keys management Notification preferences Theme preferences (light/dark)
+
+C. System Information
+
+Application version Java version Spring Boot version Uptime Database info Memory info
+
+API Calls:
+
+GET /api/settings (get settings) PUT /api/settings (update settings) GET /api/profile (user profile) PUT /api/profile (update profile) GET /api/system/info (system info)
+
+UI Components:
+
+Tabbed interface Form with sections Toggle switches Number inputs Save/Reset buttons
+
+3.9 Audit Log Page (Admin Only) Purpose: View system audit trail Sections: A. Audit Log Table
+
+Columns:
+
+Timestamp User Action (UPLOAD, DEPLOY, DELETE, etc.) Service Name Status (SUCCESS, FAILED) IP Address Details
+
+Search by user or service Filter by action type Date range selector Export to CSV
+
+B. Log Detail Modal
+
+Full event details Request/response data (if applicable) Stack trace (for errors) Related events
+
+API Calls:
+
+GET /api/audit/logs (list logs) GET /api/audit/logs/{id} (log details) GET /api/audit/export (export logs)
+
+UI Components:
+
+Data table with pagination Date range picker Filter dropdowns Modal dialog Export button
+
+Common UI Components 4.1 Navigation Top navbar:
+
+Logo/brand Main navigation links User menu (profile, settings, logout) Notifications bell Search bar (global search)
+
+Sidebar (collapsible):
+
+Dashboard Schemas Services API Testing Documentation Monitoring Users (admin) Audit Logs (admin) Settings
+
+Breadcrumbs for navigation hierarchy
+
+4.2 Notifications
+
+Toast notifications (success, error, warning, info) Notification center (bell icon) Real-time updates via WebSocket In-app alerts for important events
+
+4.3 Loading States
+
+Skeleton screens for initial load Spinner for actions Progress bars for uploads Loading overlays for blocking operations
+
+4.4 Error States
+
+Empty state illustrations Error messages with retry options 404 page 500 error page Offline mode message
+
+4.5 Responsive Design
+
+Mobile-friendly layouts Tablet optimization Desktop layouts Responsive tables (mobile view: cards) Touch-friendly controls
+
+State Management 5.1 Global State Authentication state (user, token, permissions) Services list Schemas list System settings Notifications
+
+5.2 Local State
+
+Form inputs Modal open/close states Table filters and sorting Selected items UI preferences
+
+5.3 Server State (React Query/SWR)
+
+Cache API responses Automatic refetching Optimistic updates Background sync Pagination state
+
+API Integration Layer 6.1 HTTP Client Setup Axios/Fetch wrapper Base URL configuration Request/response interceptors Authentication token injection Error handling Retry logic
+
+6.2 API Service Modules
+
+authService.ts (login, logout, refresh token) schemaService.ts (upload, list, get, delete) serviceService.ts (deploy, undeploy, status, metrics) testingService.ts (test API calls) userService.ts (user management) auditService.ts (audit logs) settingsService.ts (settings management)
+
+6.3 Type Definitions
+
+TypeScript interfaces for all API requests/responses DTO types matching backend models Enum types for statuses and roles
+
+Security (Frontend) 7.1 Authentication Flow Login page JWT token storage (localStorage/sessionStorage/cookie) Token refresh mechanism Auto-logout on token expiration Protected routes (require authentication)
+
+7.2 Authorization
+
+Role-based component rendering Route guards based on permissions Conditional action buttons Hide/disable features based on role
+
+7.3 Security Best Practices
+
+XSS prevention CSRF token handling Secure token storage Input sanitization Content Security Policy headers
+
+Performance Optimization 8.1 Code Splitting Route-based code splitting Lazy loading of components Dynamic imports for heavy libraries
+
+8.2 Caching
+
+API response caching Asset caching Service worker for offline support
+
+8.3 Optimization Techniques
+
+Debouncing search inputs Throttling scroll events Virtual scrolling for large lists Image lazy loading Memoization of expensive computations
+
+Testing Strategy (Frontend) 9.1 Unit Tests Component tests (React Testing Library) Utility function tests Service module tests State management tests
+
+9.2 Integration Tests
+
+User flow tests API integration tests Form submission tests
+
+9.3 E2E Tests
+
+Cypress or Playwright Critical user journeys Cross-browser testing
+
+Build & Deployment 10.1 Build Configuration Development environment setup Production build optimization Environment variables Build scripts
+
+10.2 Deployment
+
+Docker containerization Nginx configuration CI/CD pipeline CDN integration Static hosting options
+
+🎯 Output Format Requirements For Backend Specifications: Provide a comprehensive document (8,000-12,000 words) including:
+
+Executive summary System architecture diagrams (described in text/ASCII) Detailed API specifications with:
+
+Endpoint URL HTTP method Request parameters/body Response format Status codes Example requests/responses
+
+Component descriptions with:
+
+Responsibility Dependencies Interfaces Implementation notes
+
+Data models with field descriptions Security implementation details Error handling specifications Configuration examples (YAML/Properties) Deployment guide API reference table
+
+For Frontend Specifications: Provide a comprehensive document (8,000-12,000 words) including:
+
+Executive summary Application architecture Page-by-page specifications with:
+
+Purpose Layout mockup description Components breakdown API calls User interactions State management Validation rules
+
+Component library requirements Routing structure State management strategy API integration specifications Security implementation Responsive design guidelines Testing strategy Build and deployment guide
+
+Diagrams:
+
+Use ASCII art for simple diagrams Describe complex diagrams in detail Include component relationships Show data flow
+
+Code Examples:
+
+Provide configuration examples Show API request/response examples Include TypeScript interfaces Demonstrate key patterns
+
+💡 Additional Considerations Backend:
+
+How to handle concurrent XSD uploads? Memory management strategy for multiple classloaders? Hot reload mechanism without downtime? Backward compatibility for schema updates? Distributed deployment considerations? Database schema for metadata? Transaction management strategy? Caching strategy for compiled classes? Rate limiting implementation? Monitoring and alerting setup?
+
+Frontend:
+
+How to handle real-time updates (WebSocket/SSE)? Offline mode capabilities? Mobile app considerations (React Native)? Accessibility (WCAG compliance)? Internationalization (i18n)? Theme customization? Print-friendly views? Keyboard shortcuts? Data export formats? Help documentation integration?
+
+✅ Success Criteria Backend:
+
+Clear API contracts for all endpoints Well-defined component responsibilities Security considerations addressed Performance requirements specified Error handling comprehensive Deployment strategy clear Scalability considerations included
+
+Frontend:
+
+Complete user journey mapped All pages fully specified Component hierarchy clear API integration documented Responsive design addressed Accessibility considered Performance optimizations included Testing strategy defined
+
+🚀 Delivery Format Please provide:
+
+Backend Specifications Document (Markdown format, 10,000+ words) Frontend Specifications Document (Markdown format, 10,000+ words) API Reference Table (summary of all endpoints) Component Diagram (ASCII or detailed description) User Flow Diagram (described) Data Model Diagram (described)
+
+Organize content with clear headings, subheadings, tables, code blocks, and examples for maximum clarity and usability by development teams.
+
+Begin generating the comprehensive specifications now.RetrySCreate backend and frontend specification Ai prompt different filesAI Prompt 1: Backend Specifications
+
+🎯 Role & Context You are a Senior Backend Architect with 15+ years of experience in enterprise Java applications, microservices architecture, and dynamic code generation systems. You specialize in Spring Boot, JAXB, XML processing, and runtime class loading mechanisms.
+
+📋 Project Overview Design comprehensive backend specifications for a Dynamic XSD-to-Service Generation Platform that:
+
+Accepts XSD file uploads via REST API Parses and validates XSD schemas Generates Java POJO classes with dual annotations (JAXB + Jackson) Compiles Java sources at runtime using Java Compiler API Dynamically loads compiled classes using custom ClassLoaders Auto-generates REST API endpoints (supporting JSON and XML) Auto-generates SOAP Web Services (with WSDL) Manages service lifecycle (deploy, undeploy, update) Provides monitoring, logging, and security
+
+🛠️ Technology Stack Mandatory Technologies
+
+Java 21 (LTS version with modern features) Spring Boot 3.3.x (latest stable) Spring Web (REST API framework) Spring Web Services (SOAP framework) JAXB API 4.x (XML binding) Jackson 2.17.x (JSON processing) Woodstox 6.x (StAX XML parser) Java Compiler API (javax.tools.JavaCompiler) Spring Data JPA 3.x (optional persistence) Spring Security 6.x (authentication/authorization) Spring Boot Actuator (monitoring) Lombok (reduce boilerplate) Maven or Gradle (build tool)
+
+Optional Technologies
+
+H2/PostgreSQL/MySQL (database) Redis (caching) Micrometer (metrics) SLF4J + Logback (logging) OpenAPI/Springdoc (API documentation) Docker (containerization) Kubernetes (orchestration)
+
+📝 Required Specification Sections Create a comprehensive technical specification document (12,000-15,000 words) covering:
+
+Executive Summary (500 words) Project purpose and business value Key capabilities and features Target users and use cases High-level architecture overview Success criteria
+
+System Architecture (2,000 words) 2.1 Architecture Overview Layered architecture diagram (described in detail) Component interaction flow Request processing pipeline Service lifecycle flow
+
+2.2 Core Components
+
+XSD Management Module
+
+Upload handler Validator Storage manager Metadata repository
+
+Code Generation Module
+
+JAXB XJC integration Annotation enhancer Source code generator Package manager
+
+Dynamic Compilation Module
+
+Java Compiler API wrapper Classpath resolver Diagnostic collector Compilation cache
+
+ClassLoader Management Module
+
+Custom ClassLoader implementation Isolation strategy Version management Memory management
+
+REST API Generation Module
+
+Controller generator Endpoint mapper Request handler creator Dynamic registration
+
+SOAP Service Generation Module
+
+Endpoint generator WSDL generator Message handler creator Namespace manager
+
+Service Registry
+
+Service catalog Endpoint registry Metadata store Health tracker
+
+2.3 Architecture Diagrams (ASCII/Description)
+
+Component diagram Sequence diagram for XSD upload flow Sequence diagram for service invocation Class diagram for core components Deployment diagram
+
+2.4 Design Patterns
+
+Factory Pattern (for generators) Strategy Pattern (for compilation) Registry Pattern (for services) Observer Pattern (for events) Template Method (for generation)
+
+API Specifications (4,000 words) For each API endpoint, provide: Endpoint URL (with path variables) HTTP Method Description (purpose and functionality) Request Headers (required/optional) Request Parameters (query/path) Request Body (schema with examples) Response Status Codes (all possible codes) Response Body (schema with examples) Error Responses (format and examples) Security Requirements (authentication/authorization) Rate Limiting (if applicable) Example cURL Command
+
+3.1 Schema Management APIs POST /api/v1/schema/upload GET /api/v1/schema/{serviceName} GET /api/v1/schema/{serviceName}/version/{version} GET /api/v1/schema/list PUT /api/v1/schema/{serviceName} DELETE /api/v1/schema/{serviceName} GET /api/v1/schema/{serviceName}/metadata GET /api/v1/schema/{serviceName}/validation-report POST /api/v1/schema/{serviceName}/validate 3.2 Service Management APIs POST /api/v1/management/deploy/{serviceName} POST /api/v1/management/undeploy/{serviceName} POST /api/v1/management/redeploy/{serviceName} GET /api/v1/management/status/{serviceName} GET /api/v1/management/health/{serviceName} GET /api/v1/management/services PUT /api/v1/management/services/{serviceName}/config GET /api/v1/management/services/{serviceName}/endpoints GET /api/v1/management/services/{serviceName}/metrics GET /api/v1/management/services/{serviceName}/logs 3.3 Code Generation APIs POST /api/v1/codegen/generate/{serviceName} GET /api/v1/codegen/{serviceName}/sources GET /api/v1/codegen/{serviceName}/classes GET /api/v1/codegen/{serviceName}/compilation-report POST /api/v1/codegen/{serviceName}/recompile 3.4 Testing & Utility APIs POST /api/v1/test/generate-sample/{serviceName} POST /api/v1/test/validate-request/{serviceName} GET /api/v1/catalog GET /api/v1/catalog/{serviceName}/openapi GET /api/v1/catalog/{serviceName}/swagger-ui 3.5 Dynamic REST APIs (Generated) POST /api/dynamic/{serviceName}/v{version}/{entityName} GET /api/dynamic/{serviceName}/v{version}/{entityName}/{id} GET /api/dynamic/{serviceName}/v{version}/{entityName} PUT /api/dynamic/{serviceName}/v{version}/{entityName}/{id} PATCH /api/dynamic/{serviceName}/v{version}/{entityName}/{id} DELETE /api/dynamic/{serviceName}/v{version}/{entityName}/{id} 3.6 Dynamic SOAP Services (Generated) SOAP /ws/{serviceName}/v{version} WSDL /ws/{serviceName}/v{version}?wsdl 3.7 Admin & Monitoring APIs GET /actuator/health GET /actuator/metrics GET /actuator/metrics/{metricName} GET /api/v1/admin/audit-logs GET /api/v1/admin/users POST /api/v1/admin/users PUT /api/v1/admin/users/{id} DELETE /api/v1/admin/users/{id} GET /api/v1/admin/system-info PUT /api/v1/admin/settings 4. Data Models & Entities (1,500 words) 4.1 Schema Metadata Entity java@Entity @Table(name = "schema_metadata") public class SchemaMetadata { // All fields with JPA annotations // Relationships // Constraints // Indexes } Provide:
+
+Full entity definition with annotations Field descriptions Relationships (OneToMany, ManyToOne, etc.) Database constraints Sample JSON representation
+
+Entities to define:
+
+SchemaMetadata ServiceDefinition EndpointMapping CompilationResult DeploymentHistory AuditLog User Role Permission ServiceMetrics ErrorLog
+
+4.2 DTO Classes
+
+SchemaUploadRequest SchemaUploadResponse ServiceDeployRequest ServiceStatusResponse ErrorResponse ValidationReport MetricsResponse EndpointInfo
+
+4.3 Database Schema
+
+ER diagram description Table creation scripts (DDL) Indexes strategy Migration strategy
+
+Core Component Specifications (2,500 words) 5.1 XSD Validator Component java@Component public class XsdValidator { // Interface // Implementation details // Validation rules // Error handling } For each component: Purpose and responsibility Public interface (method signatures) Dependencies (injected services) Configuration properties Algorithm/logic description Error handling strategy Performance considerations Example usage
+
+Components to specify:
+
+XsdValidator XsdParser XsdStorageService PojoGenerator AnnotationEnhancer DynamicCompiler CustomClassLoader ClassLoaderManager RestControllerGenerator RestEndpointRegistrar SoapEndpointGenerator WsdlGenerator ServiceRegistry DeploymentOrchestrator
+
+5.2 Code Generation Process Detailed step-by-step flow:
+
+XSD parsing Schema analysis Type mapping Source code generation Annotation application File system operations Compilation triggering
+
+5.3 Dynamic Compilation Process
+
+Classpath setup Compiler invocation Diagnostic handling Class file storage Error recovery
+
+5.4 ClassLoader Isolation Strategy
+
+Parent-last delegation Namespace isolation Version coexistence Resource loading Class unloading
+
+5.5 Endpoint Registration Process
+
+Spring MVC handler mapping Request mapping creation Handler method generation Interceptor registration Exception handler registration
+
+Configuration Specifications (1,000 words) 6.1 Application Configuration (application.yml) yaml# Complete configuration with comments spring: application: name: dynamic-service-platform dynamic-service: xsd: storage-path: ${XSD_STORAGE_PATH:/var/lib/xsd-store} max-file-size: 5MB validation-enabled: true cache-enabled: true
+
+compilation: temp-directory: ${COMPILE_TEMP:/tmp/dynamic-compile} keep-sources: true java-version: 21 compiler-options: - "-parameters" - "-g"
+
+classloader: isolation-enabled: true parent-first: false max-services: 100
+
+rest: base-path: /api/dynamic versioning-enabled: true default-page-size: 20 max-page-size: 100
+
+soap: base-path: /ws wsdl-enabled: true soap-version: "1.2"
+
+... complete configuration 6.2 Service-Specific Configuration
+
+Per-service settings Override mechanism Configuration precedence Hot reload support
+
+6.3 Environment-Specific Configuration
+
+Development profile Testing profile Production profile Docker environment
+
+Security Specifications (1,200 words) 7.1 Authentication JWT token-based authentication Token generation and validation Refresh token mechanism Token expiration and renewal API key authentication for services
+
+7.2 Authorization
+
+Role-Based Access Control (RBAC) Roles: ADMIN, DEVELOPER, USER Permissions matrix Method-level security Service-level access control
+
+7.3 Security Configuration java@Configuration @EnableWebSecurity public class SecurityConfig { // Security bean definitions // Filter chain // Authentication manager } 7.4 XSD Security Validation
+
+XXE (XML External Entity) prevention XML bomb prevention Schema complexity limits Malicious pattern detection File size validation
+
+7.5 Rate Limiting
+
+Token bucket algorithm Per-user limits Per-service limits Per-endpoint limits Distributed rate limiting (Redis)
+
+7.6 Audit Logging
+
+Security events tracking User action logging Failed authentication attempts Permission denials
+
+Error Handling & Validation (1,000 words) 8.1 Global Exception Handler java@RestControllerAdvice public class GlobalExceptionHandler { // Exception handlers // Error response formatting } 8.2 Error Response Format json{ "timestamp": "2025-11-14T10:30:00Z", "status": 400, "error": "Bad Request", "message": "Validation failed", "path": "/api/v1/schema/upload", "errors": [ { "field": "serviceName", "message": "Service name already exists", "rejectedValue": "customer-service" } ], "traceId": "abc123xyz" } 8.3 SOAP Fault Format xmlsoap:Fault <faultcode>soap:Server</faultcode> <faultstring>Internal Processing Error</faultstring> <detail> <error> <code>COMPILATION_ERROR</code> <message>Failed to compile generated sources</message> <timestamp>2025-11-14T10:30:00Z</timestamp> </error> </detail> </soap:Fault> 8.4 Exception Hierarchy Custom exception classes Exception categories HTTP status mapping Recovery strategies
+
+8.5 Validation Rules
+
+Bean Validation (JSR-380) Custom validators XSD validation Business rule validation
+
+Logging & Monitoring (800 words) 9.1 Logging Strategy Log levels and usage Structured logging (JSON) Log correlation (trace ID) Log aggregation
+
+9.2 Logging Configuration xml<configuration> <!-- Logback configuration --> </configuration> 9.3 What to Log
+
+XSD upload events Compilation results Deployment events Service invocations Errors and exceptions Performance metrics Security events
+
+9.4 Metrics Collection
+
+Micrometer integration Custom metrics JVM metrics Application metrics Business metrics
+
+9.5 Health Checks
+
+Liveness probe Readiness probe Custom health indicators Dependency health checks
+
+9.6 Monitoring Endpoints
+
+Actuator endpoints Prometheus endpoint Custom metrics endpoint
+
+Performance Optimization (600 words) 10.1 Caching Strategy Compiled class caching Schema caching Endpoint mapping caching Redis integration
+
+10.2 Connection Pooling
+
+Database connection pool (HikariCP) HTTP client connection pool
+
+10.3 Async Processing
+
+CompletableFuture usage @Async methods Thread pool configuration Task execution
+
+10.4 Resource Management
+
+Memory limits per service CPU allocation Thread pool sizing Connection limits
+
+Testing Strategy (800 words) 11.1 Unit Testing JUnit 5 Mockito for mocking Test coverage targets (>80%) Component testing
+
+11.2 Integration Testing
+
+Spring Boot Test TestContainers for database Mock MVC for controllers WireMock for external services
+
+11.3 End-to-End Testing
+
+Complete flow testing XSD upload → Service generation → Invocation Error scenario testing
+
+11.4 Performance Testing
+
+JMeter test plans Gatling scenarios Load testing strategy Baseline metrics
+
+11.5 Security Testing
+
+Penetration testing OWASP Top 10 validation Authentication/authorization testing Input validation testing
+
+Deployment & DevOps (1,000 words) 12.1 Docker Configuration dockerfile# Complete Dockerfile FROM eclipse-temurin:21-jre ... full configuration 12.2 Docker Compose yaml# Complete docker-compose.yml version: '3.8' services: app: # ... full configuration
+
+12.3 Kubernetes Deployment
+Deployment YAML
+Service YAML
+ConfigMap
+Secret management
+Ingress configuration
+Persistent Volume Claims
+12.4 CI/CD Pipeline
+Build stage
+Test stage
+Security scan stage
+Docker image build
+Deployment stage
+Rollback strategy
+12.5 Environment Setup
+Development environment
+Staging environment
+Production environment
+Environment variables
+Secrets management
+13. API Reference Summary Table
+Create a comprehensive table:
+
+| Category | Method | Endpoint | Description | Auth Required | Rate Limit | |----------|--------|----------|-------------|---------------|------------| | Schema | POST | /api/v1/schema/upload | Upload XSD | Yes | 10/min | | ... | ... | ... | ... | ... | ... |
+
+14. Appendices
+A. Glossary
+Technical term definitions
+B. Sample XSD File
+Example XSD for testing
+C. Sample Generated POJO
+Example of generated Java class
+D. Sample REST Request/Response
+Complete examples
+E. Sample SOAP Request/Response
+Complete examples
+F. Configuration Reference
+All configuration properties with descriptions
+G. Error Codes Reference
+Complete error code catalog
+🎨 Output Format Requirements
+Document Structure
+Use Markdown format
+Include table of contents with links
+Use code blocks with syntax highlighting
+Include tables for structured data
+Use blockquotes for important notes
+Include examples for every concept
+Use proper heading hierarchy (H1-H6)
+Code Examples
+Provide complete, compilable code snippets
+Include necessary imports
+Add inline comments for complex logic
+Show configuration in context
+Provide multiple examples for key concepts
+Diagrams
+Use ASCII art for simple diagrams
+Provide detailed textual descriptions for complex diagrams
+Include legend/key for symbols used
+Writing Style
+Technical but clear
+Assume audience is experienced Java developers
+Be specific and detailed
+Include rationale for design decisions
+Mention trade-offs and alternatives
+Provide references to Spring documentation where relevant
+✅ Quality Checklist
+Ensure the specification includes:
+
+
+All API endpoints with complete details
+
+All configuration properties documented
+
+Security considerations for each component
+
+Error handling for each operation
+
+Performance considerations
+
+Scalability discussion
+
+Transaction management strategy
+
+Concurrency handling
+
+Resource cleanup procedures
+
+Backward compatibility notes
+
+Version migration strategy
+
+Troubleshooting guide
+
+FAQs section
+📊 Deliverable
+A single, comprehensive Backend Technical Specification Document in Markdown format containing 12,000-15,000 words with:
+
+Clear structure and navigation
+Complete API specifications
+Detailed component designs
+Configuration examples
+Code samples
+Deployment guides
+Testing strategies
+Security implementations
+Target Audience: Backend developers, DevOps engineers, system architects who will implement this system.
+
+Begin generating the comprehensive backend specification document now.
+
+AI Prompt 2: Frontend Specifications
+🎯 Role & Context
+You are a Senior Frontend Architect with 15+ years of experience in enterprise web applications, React ecosystems, TypeScript, and modern UI/UX design. You specialize in building admin dashboards, developer portals, API management interfaces, and real-time monitoring systems.
+
+📋 Project Overview
+Design comprehensive frontend specifications for the Dynamic XSD-to-Service Generation Platform Admin Console and Developer Portal that provides:
+
+Admin Console for managing XSD schemas and services
+Service Management Interface for deploying and monitoring services
+API Testing Playground for interactive testing
+Documentation Portal for generated API docs
+Monitoring Dashboard for analytics and metrics
+User Management interface for access control
+Settings Interface for configuration
+The frontend must be responsive, accessible, performant, and provide excellent developer experience.
+
+🛠️ Technology Stack
+Mandatory Technologies (Choose One Framework)
+Option 1: React Stack
+
+React 18+
+TypeScript 5+
+React Router 6+
+TanStack Query (React Query) or SWR (data fetching)
+Zustand or Redux Toolkit (state management)
+Axios (HTTP client)
+React Hook Form (forms)
+Zod or Yup (validation)
+Option 2: Angular Stack
+
+Angular 17+
+TypeScript 5+
+Angular Router
+RxJS (reactive programming)
+NgRx (state management)
+Angular HttpClient
+Reactive Forms
+Option 3: Vue Stack
+
+Vue 3+
+TypeScript 5+
+Vue Router
+Pinia (state management)
+Axios (HTTP client)
+VeeValidate (forms)
+UI Component Library (Choose One)
+Material UI (MUI) - Material Design
+Ant Design - Enterprise UI
+Chakra UI - Accessible components
+Tailwind CSS + Headless UI - Utility-first
+shadcn/ui - Modern component library
+Additional Libraries
+Monaco Editor or CodeMirror (code editor)
+Chart.js or Recharts or Apache ECharts (charts)
+React Table or AG Grid (data tables)
+date-fns or Day.js (date handling)
+React Toastify or Sonner (notifications)
+Lucide or Heroicons (icons)
+Framer Motion or React Spring (animations)
+Development Tools
+Vite or Webpack (bundler)
+ESLint (linting)
+Prettier (formatting)
+Vitest or Jest (unit testing)
+React Testing Library (component testing)
+Cypress or Playwright (E2E testing)
+Storybook (component development)
+📝 Required Specification Sections
+Create a comprehensive frontend specification document (12,000-15,000 words) covering:
+
+1. Executive Summary (500 words)
+Application purpose and target users
+Key features and capabilities
+User roles and permissions
+Technology choices rationale
+Success metrics
+2. Application Architecture (2,000 words)
+2.1 Architecture Overview
+Component hierarchy diagram
+Application structure (folders)
+State management flow
+Data flow diagram
+Routing structure
+2.2 Folder Structure
+src/ ├── app/ │ ├── layout/ │ ├── pages/ │ └── routes/ ├── features/ │ ├── schema/ │ ├── service/ │ ├── testing/ │ └── monitoring/ ├── shared/ │ ├── components/ │ ├── hooks/ │ ├── services/ │ ├── types/ │ └── utils/ ├── assets/ │ ├── images/ │ ├── icons/ │ └── styles/ └── config/
+
+Explain each folder's purpose and contents.
+
+2.3 Design Patterns
+Component composition patterns
+Custom hooks patterns
+State management patterns
+API integration patterns
+Error boundary patterns
+2.4 State Management Strategy
+Global state (authentication, user, settings)
+Server state (API data, caching)
+Local state (UI, forms)
+URL state (filters, pagination)
+2.5 Routing Architecture
+Route hierarchy
+Protected routes
+Lazy loading strategy
+Route guards
+Nested routing
+3. User Roles & Permissions (800 words)
+3.1 Role Definitions
+Administrator
+
+Full system access
+User management
+System configuration
+All schema operations
+All service operations
+Audit log access
+System monitoring
+Developer
+
+Upload schemas
+Deploy services
+Test services
+View documentation
+View monitoring (own services)
+No user management
+No system settings
+User (Consumer)
+
+View service catalog
+View documentation
+Test public services
+No upload/deploy
+No management access
+3.2 Permission Matrix Table
+| Feature | Admin | Developer | User | |---------|-------|-----------|------| | Upload Schema | ✓ | ✓ | ✗ | | Deploy Service | ✓ | ✓ | ✗ | | ... | ... | ... | ... |
+
+3.3 UI Component Visibility Rules
+Conditional rendering based on role
+Disabled vs hidden approach
+Permission checking mechanism
+4. Page-by-Page Specifications (5,000 words)
+For each page, provide:
+
+Route: URL path
+Page Title: Display name
+Purpose: What users accomplish
+User Roles: Who can access
+Layout: Description of sections
+Components: List of UI components
+State Requirements: What data is needed
+API Calls: Which endpoints are called
+User Interactions: All possible actions
+Validation Rules: Form validation
+Error Handling: How errors are displayed
+Loading States: Skeleton/spinner strategy
+Empty States: What shows when no data
+Responsive Behavior: Mobile/tablet/desktop
+Accessibility: ARIA labels, keyboard nav
+Wireframe Description: ASCII or detailed text
+4.1 Dashboard Page
+Route: /dashboard or /
+
+Purpose: Landing page showing system overview and quick actions
+
+Layout Sections:
+
+A. Header Section
+
+Page title: "Dashboard"
+Date range selector (Last 24h, 7d, 30d, Custom)
+Refresh button
+Export button
+B. Metrics Cards Row ┌─────────────┬─────────────┬─────────────┬─────────────┐ │ Total │ Active │ Total │ Success │ │ Services │ Services │ Requests │ Rate │ │ 24 │ 20 │ 125,847 │ 99.2% │ │ ↑ 3 (14d) │ ↓ 2 (14d) │ ↑ 12% (14d) │ ↑ 0.5% (7d) │ └─────────────┴─────────────┴─────────────┴─────────────┘ C. Charts Section (2 columns)
+
+Left: Request Volume Chart (line chart, last 24h) Right: Service Status Distribution (donut chart)
+
+D. Recent Activity Timeline
+
+Last 10 activities (schema upload, deploy, error, etc.) Timestamp, user, action, status "View All" link to audit logs
+
+E. Quick Actions Panel
+
+"Upload XSD" button "Deploy Service" button "Test API" button "View Documentation" button
+
+F. System Health Indicators
+
+CPU usage bar Memory usage bar Active connections Classloaders count
+
+Components:
+
+<MetricCard> (reusable) <LineChart> (from chart library) <DonutChart> (from chart library) <ActivityTimeline> (custom) <QuickActionButton> (custom) <HealthIndicator> (custom) <DateRangePicker> (from UI library)
+
+State Requirements: typescriptinterface DashboardState { metrics: { totalServices: number; activeServices: number; totalRequests: number; successRate: number; trends: { services: number; requests: number; }; }; requestVolumeData: ChartDataPoint[]; statusDistribution: { deployed: number; deploying: number; failed: number; undeployed: number; }; recentActivities: Activity[]; systemHealth: { cpuUsage: number; memoryUsage: number; activeConnections: number; classloadersCount: number; }; dateRange: DateRange; isLoading: boolean; error: Error | null; }
+
+API Calls:
+
+GET /api/v1/management/services?summary=true
+GET /api/v1/management/metrics?range=24h
+GET /api/v1/audit/recent?limit=10
+GET /actuator/metrics
+User Interactions:
+
+Change date range → Refresh all data
+Click metric card → Navigate to detailed view
+Click activity item → View detail modal
+Click quick action → Navigate to respective page
+Click refresh → Reload all data
+Responsive Behavior:
+
+Desktop (>1024px): 4-column metric cards, 2-column charts
+Tablet (768-1024px): 2-column metric cards, stacked charts
+Mobile (<768px): 1-column layout, simplified charts
+Loading State:
+
+Skeleton screens for metric cards
+Shimmer effect for charts
+Loading spinner for activity timeline
+Error Handling:
+
+Show error banner at top if API fails
+Retry button
+Fallback to cached data if available
+4.2 Schema Management Page
+Route: /schemas
+
+Purpose: Upload, view, manage XSD schemas
+
+Layout Sections:
+
+A. Page Header
+
+Page title: "Schema Management"
+"Upload XSD" button (primary action)
+Search input (debounced)
+Filter dropdown (Status: All, Uploaded, Active, Failed, Deprecated)
+View toggle (Table / Grid)
+B. Upload Modal (triggered by button) ┌───────────────────────────────────────┐ │ Upload XSD Schema [X] │ ├───────────────────────────────────────┤ │ │ │ ┌─────────────────────────────────┐ │ │ │ Drag & Drop XSD file here │ │ │ │ or click to browse │ │ │ │ (Max 5MB, .xsd only) │ │ │ └─────────────────────────────────┘ │ │ │ │ Service Name: [] * │ │ Version: [1.0 ] │ │ Description: [] │ │ Namespace: [auto-detected] │ │ │ │ ☐ Validate syntax │ │ ☐ Auto-deploy after upload │ │ │ │ [Cancel] [Upload] │ └───────────────────────────────────────┘
+
+C. Schema List (Table View) Columns:
+
+Checkbox (for bulk actions)
+Service Name (sortable, clickable)
+Version (sortable)
+Namespace (truncated, tooltip on hover)
+Status (badge with color)
+Uploaded By (user avatar + name)
+Upload Date (relative time, tooltip shows exact)
+Actions (View, Deploy, Download, Delete)
+D. Schema List (Grid View) ┌────────────┐ ┌────────────┐ ┌────────────┐ │ Service │ │ Service │ │ Service │ │ Name │ │ Name │ │ Name │ │ [ACTIVE] │ │ [UPLOADED] │ │ [FAILED] │ │ v1.0 │ │ v2.0 │ │ v1.5 │ │ 2 days ago │ │ 1 hour ago │ │ 3 days ago │ │ [Actions▼] │ │ [Actions▼] │ │ [Actions▼] │ └────────────┘ └────────────┘ └────────────┘
+
+E. Bulk Actions Bar (appears when items selected)
+
+"X items selected"
+Delete button
+Export button
+Cancel selection link
+F. Pagination
+
+Items per page selector (10, 20, 50, 100)
+Page numbers
+Previous/Next buttons
+Total count display
+G. Schema Detail Modal ┌───────────────────────────────────────────┐ │ customer-service v1.0 [X] │ ├───────────────────────────────────────────┤ │ [Overview] [XSD Content] [POJOs] [Logs] │ ├───────────────────────────────────────────┤ │ Overview Tab: │ │ Service Name: customer-service │ │ Version: 1.0 │ │ Namespace: http://example.com/customer │ │ Status: ACTIVE │ │ Uploaded By: john@example.com │ │ Uploaded At: 2025-11-14 10:00:00 │ │ Description: Customer management service │ │ │ │ Generated Artifacts: │ │ - POJOs: Customer, Address (2 classes) │ │ - REST Endpoints: 5 endpoints │ │ - SOAP Operations: 3 operations │ │ │ │ [Deploy Service] [Download XSD] │ │ [Delete Schema] │ └───────────────────────────────────────────┘ Components:
+
+<FileUpload> (drag-drop support) <DataTable> (sortable, filterable) <GridView> (card-based) <StatusBadge> (colored badges) <Modal> (reusable) <CodeEditor> (Monaco/CodeMirror) <Pagination> (reusable) <BulkActionBar> (conditional render) <ConfirmDialog> (for delete)
+
+State Requirements: typescriptinterface SchemaManagementState { schemas: Schema[]; selectedSchemas: string[]; view: 'table' | 'grid'; filter: { status: SchemaStatus | 'all'; search: string; }; sort: { field: string; order: 'asc' | 'desc'; }; pagination: { page: number; pageSize: number; total: number; }; uploadModal: { isOpen: boolean; file: File | null; formData: UploadFormData; isUploading: boolean; progress: number; validationResult: ValidationResult | null; }; detailModal: { isOpen: boolean; schema: Schema | null; activeTab: string; }; isLoading: boolean; error: Error | null; }
+
+interface Schema { id: string; serviceName: string; version: string; namespace: string; status: 'UPLOADED' | 'ACTIVE' | 'FAILED' | 'DEPRECATED'; uploadedBy: string; uploadedAt: string; description: string; xsdContent: string; generatedArtifacts: { pojos: string[]; restEndpoints: number; soapOperations: number; }; } API Calls:
+
+GET /api/v1/schema/list?page=1&size=20&status=all&search= POST /api/v1/schema/upload (multipart/form-data) GET /api/v1/schema/{serviceName} DELETE /api/v1/schema/{serviceName} POST /api/v1/schema/{serviceName}/validate GET /api/v1/codegen/{serviceName}/sources
+
+User Interactions:
+
+Click "Upload XSD" → Open upload modal Drag-drop file → Validate file type/size → Preview Fill form → Validate → Click "Upload" → Show progress → Success/Error notification Search schemas → Debounced API call → Update table Filter by status → Update table Sort column → Update table Click schema name → Open detail modal Select schemas → Show bulk action bar Click delete → Show confirmation → Delete → Refresh list Click deploy → Navigate to deployment page with pre-selected schema
+
+Form Validation:
+
+Service Name: Required, unique, alphanumeric + hyphen, 3-50 chars Version: Optional, semantic version format (x.y.z) Description: Optional, max 500 chars File: Required, .xsd extension, max 5MB
+
+Error Handling:
+
+File validation errors → Show error message below file input Upload errors → Show error notification with details API errors → Show error banner with retry button Network errors → Show offline message
+
+Loading States:
+
+Table loading: Skeleton rows Upload: Progress bar with percentage Validation: Spinner with "Validating..." text Delete: Spinner on delete button
+
+Empty States:
+
+No schemas: Show illustration + "Upload your first XSD" message + Upload button No search results: "No schemas match your search" + Clear search button No filtered results: "No schemas with this status" + Clear filter button
+
+Accessibility:
+
+File upload: keyboard accessible, screen reader announces file selection Table: keyboard navigation (Tab, Arrow keys), row selection with Space Modals: focus trap, ESC to close, focus on first input on open All buttons: aria-labels Status badges: aria-label with status text
+
+Responsive Design:
+
+Desktop: Full table with all columns Tablet: Hide namespace column, truncate service name Mobile: Grid view only, swipe actions on cards
+
+4.3 Service Management Page Route: /services Purpose: Deploy, monitor, and manage services [Continue with similar detailed specifications for remaining pages...] Specify in detail:
+
+Service Management Page API Testing Playground API Documentation Page Monitoring & Analytics Page User Management Page (Admin) Settings Page Audit Logs Page (Admin)
+
+Common UI Components Library (1,500 words) Document all reusable components: 5.1 Navigation Components <TopNavbar> <Sidebar> <Breadcrumbs> <UserMenu> <NotificationBell> 5.2 Layout Components
+
+<PageLayout> <ContentContainer> <SplitPanel> <Card> <Section> 5.3 Data Display Components
+
+<DataTable> <GridView> <StatusBadge> <MetricCard> <Timeline> <EmptyState> <ErrorState> 5.4 Form Components
+
+<Input> <TextArea> <Select> <MultiSelect> <DatePicker> <FileUpload> <FormField> (with label, error, helper text) 5.5 Feedback Components
+
+<Toast> <Alert> <ConfirmDialog> <LoadingSpinner> <Skeleton> <ProgressBar> 5.6 Specialized Components
+
+<CodeEditor> <SyntaxHighlighter> <Chart> (wrapper for chart library) <ApiEndpointCard> <LogViewer> For each component, provide:
+
+Purpose: What it does Props Interface: TypeScript interface Usage Example: Code snippet Variants: Different styles/sizes Accessibility: ARIA attributes Styling: CSS/Tailwind classes
+
+Example: typescriptinterface DataTableProps<T> { data: T[]; columns: Column<T>[]; isLoading?: boolean; onRowClick?: (row: T) => void; onSort?: (field: string, order: 'asc' | 'desc') => void; pagination?: PaginationConfig; selection?: { enabled: boolean; selectedRows: string[]; onSelectionChange: (selected: string[]) => void; }; emptyState?: React.ReactNode; }
+
+// Usage <DataTable data={schemas} columns={schemaColumns} isLoading={isLoading} onRowClick={handleRowClick} pagination={{ page: 1, pageSize: 20, total: 100, onPageChange: handlePageChange }} /> 6. State Management (1,200 words) 6.1 Global State Structure typescriptinterface GlobalState { auth: AuthState; user: UserState; settings: SettingsState; notifications: NotificationState; }
+
+interface AuthState { isAuthenticated: boolean; token: string | null; expiresAt: number | null; refreshToken: string | null; }
+
+interface UserState { id: string; username: string; email: string; role: 'ADMIN' | 'DEVELOPER' | 'USER'; permissions: string[]; preferences: UserPreferences; } 6.2 Server State Management (React Query/SWR)
+
+Query keys structure Cache configuration Stale time strategy Refetch strategy Optimistic updates Mutation handling
+
+Example: typescript// Query keys const schemaKeys = { all: ['schemas'] as const, lists: () => [...schemaKeys.all, 'list'] as const, list: (filters: string) => [...schemaKeys.lists(), { filters }] as const, details: () => [...schemaKeys.all, 'detail'] as const, detail: (id: string) => [...schemaKeys.details(), id] as const, };
+
+// Query hook function useSchemas(filters: SchemaFilters) { return useQuery({ queryKey: schemaKeys.list(JSON.stringify(filters)), queryFn: () => schemaService.getSchemas(filters), staleTime: 5 * 60 * 1000, // 5 minutes cacheTime: 10 * 60 * 1000, // 10 minutes }); }
+
+// Mutation hook function useUploadSchema() { const queryClient = useQueryClient();
+
+return useMutation({ mutationFn: schemaService.uploadSchema, onSuccess: () => { queryClient.invalidateQueries({ queryKey: schemaKeys.lists() }); toast.success('Schema uploaded successfully'); }, onError: (error) => { toast.error(Upload failed: ${error.message}); }, }); } 6.3 Form State Management
+
+React Hook Form setup Validation with Zod Error handling Submit handling
+
+6.4 URL State
+
+Query parameters for filters Path parameters for IDs Syncing with UI state
+
+API Integration Layer (1,000 words) 7.1 HTTP Client Configuration typescript// api/client.ts import axios from 'axios'; const apiClient = axios.create({ baseURL: import.meta.env.VITE_API_BASE_URL, timeout: 30000, headers: { 'Content-Type': 'application/json', }, });
+
+// Request interceptor apiClient.interceptors.request.use( (config) => { const token = localStorage.getItem('token'); if (token) { config.headers.Authorization = Bearer ${token}; } return config; }, (error) => Promise.reject(error) );
+
+// Response interceptor apiClient.interceptors.response.use( (response) => response, async (error) => { if (error.response?.status === 401) { // Handle token refresh or logout } return Promise.reject(error); } ); 7.2 Service Modules Specify all service modules: authService.ts typescriptexport const authService = { login: (credentials: LoginCredentials) => apiClient.post<AuthResponse>('/api/v1/auth/login', credentials),
+
+logout: () => apiClient.post('/api/v1/auth/logout'),
+
+refreshToken: (refreshToken: string) => apiClient.post<AuthResponse>('/api/v1/auth/refresh', { refreshToken }),
+
+getCurrentUser: () => apiClient.get<User>('/api/v1/auth/me'), }; Create similar specifications for:
+
+schemaService.ts serviceService.ts testingService.ts monitoringService.ts userService.ts auditService.ts settingsService.ts
+
+7.3 TypeScript Type Definitions typescript// types/schema.ts export interface Schema { id: string; serviceName: string; version: string; namespace: string; status: SchemaStatus; uploadedBy: string; uploadedAt: string; description: string; xsdContent: string; generatedArtifacts: GeneratedArtifacts; }
+
+export type SchemaStatus = 'UPLOADED' | 'ACTIVE' | 'FAILED' | 'DEPRECATED';
+
+export interface GeneratedArtifacts { pojos: string[]; restEndpoints: EndpointInfo[]; soapOperations: OperationInfo[]; }
+
+// ... define all types 8. Security Implementation (800 words) 8.1 Authentication Flow
+
+Login page design JWT token storage strategy Token refresh mechanism Auto-logout implementation Session persistence
+
+8.2 Authorization
+
+Protected route component Permission checking hooks Conditional rendering utilities Role-based navigation
+
+typescript// Protected Route function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?: Role[] }) { const { user, isAuthenticated } = useAuth();
+
+if (!isAuthenticated) { return <Navigate to="/login" />; }
+
+if (roles && !roles.includes(user.role)) { return <Navigate to="/unauthorized" />; }
+
+return <>{children}</>; }
+
+// Permission hook function usePermission(permission: string) { const { user } = useAuth(); return user.permissions.includes(permission); }
+
+// Usage in component function DeleteButton() { const canDelete = usePermission('schema:delete');
+
+if (!canDelete) return null;
+
+return <Button onClick={handleDelete}>Delete</Button>; } 8.3 Security Best Practices
+
+XSS prevention (sanitization) CSRF token handling Secure token storage Content Security Policy Input validation
+
+Performance Optimization (600 words) 9.1 Code Splitting Route-based splitting Component lazy loading Dynamic imports
+
+typescript// Route lazy loading const Dashboard = lazy(() => import('./pages/Dashboard')); const SchemaManagement = lazy(() => import('./pages/SchemaManagement'));
+
+// In routes <Route path="/dashboard" element={ <Suspense fallback={<LoadingSpinner />}> <Dashboard /> </Suspense> } /> 9.2 Rendering Optimization
+
+React.memo for expensive components useMemo for expensive calculations useCallback for function props Virtual scrolling for large lists
+
+9.3 Bundle Optimization
+
+Tree shaking Code minification Asset compression CDN usage for libraries
+
+9.4 Caching Strategy
+
+API response caching (React Query) Asset caching (service worker) Browser caching headers
+
+Responsive Design (500 words) 10.1 Breakpoints typescriptconst breakpoints = { mobile: '320px', tablet: '768px', desktop: '1024px', wide: '1440px', }; 10.2 Mobile-First Approach Base styles for mobile Progressive enhancement for larger screens
+
+10.3 Responsive Patterns
+
+Navigation: Hamburger menu on mobile, sidebar on desktop Tables: Card view on mobile, table on desktop Forms: Single column on mobile, multi-column on desktop Modals: Full screen on mobile, centered on desktop
+
+Accessibility (WCAG 2.1 AA) (600 words) 11.1 Keyboard Navigation Tab order Focus indicators Keyboard shortcuts Skip links
+
+11.2 Screen Reader Support
+
+Semantic HTML ARIA labels and roles Live regions for dynamic content Form labels and descriptions
+
+11.3 Visual Accessibility
+
+Color contrast (4.5:1 for text) Focus indicators Error messages Loading states
+
+11.4 Accessibility Testing
+
+Automated testing (axe-core) Manual testing checklist Screen reader testing
+
+Testing Strategy (800 words) 12.1 Unit Testing typescript// Component test example describe('SchemaUploadModal', () => { it('should validate file type', () => { render(<SchemaUploadModal isOpen={true} />);
+
+const file = new File(['content'], 'test.txt', { type: 'text/plain' }); const input = screen.getByLabelText(/upload/i);
+
+fireEvent.change(input, { target: { files: [file] } });
+
+expect(screen.getByText(/invalid file type/i)).toBeInTheDocument(); }); }); 12.2 Integration Testing
+
+API integration tests Form submission tests Navigation tests
+
+12.3 E2E Testing typescript// Cypress test example describe('Schema Management Flow', () => { it('should upload and deploy schema', () => { cy.login('admin@example.com', 'password'); cy.visit('/schemas'); cy.get('[data-testid="upload-button"]').click(); cy.get('input[type="file"]').selectFile('fixtures/customer.xsd'); cy.get('input[name="serviceName"]').type('customer-service'); cy.get('[data-testid="submit-button"]').click(); cy.contains('Schema uploaded successfully').should('be.visible'); }); }); 12.4 Test Coverage Goals
+
+Unit tests: > 80% Integration tests: Critical flows E2E tests: Happy paths + edge cases
+
+Build & Deployment (600 words) 13.1 Build Configuration typescript// vite.config.ts export default defineConfig({ plugins: [react()], build: { outDir: 'dist', sourcemap: true, rollupOptions: { output: { manualChunks: { vendor: ['react', 'react-dom', 'react-router-dom'], ui: ['@mui/material'], charts: ['recharts'], }, }, }, }, }); 13.2 Environment Variables envVITE_API_BASE_URL=https://api.example.com VITE_WS_URL=wss://api.example.com/ws VITE_AUTH_ENABLED=true 13.3 Docker Configuration dockerfileFROM node:20-alpine as build WORKDIR /app COPY package*.json ./ RUN npm ci COPY . . RUN npm run build FROM nginx:alpine COPY --from=build /app/dist /usr/share/nginx/html COPY nginx.conf /etc/nginx/nginx.conf EXPOSE 80 CMD ["nginx", "-g", "daemon off;"] 13.4 CI/CD Pipeline
+
+Lint stage Test stage Build stage Deploy stage
+
+Design System & Style Guide (500 words) 14.1 Color Palette typescriptconst colors = { primary: { main: '#1976d2', light: '#42a5f5', dark: '#1565c0', }, secondary: { main: '#9c27b0', light: '#ba68c8', dark: '#7b1fa2', }, success: '#4caf50', warning: '#ff9800', error: '#f44336', info: '#2196f3', // ... }; 14.2 Typography Font families Font sizes Line heights Font weights
+
+14.3 Spacing System
+
+4px base unit Spacing scale (4, 8, 16, 24, 32, 48, 64)
+
+14.4 Component Variants
+
+Button variants Input variants Card variants
+
+Documentation Requirements (300 words) Component documentation (Storybook) API integration guide State management guide Testing guide Deployment guide Troubleshooting guide
+
+Appendices A. Wireframes/Mockups Description Detailed description of each page layout
+
+B. User Flows
+
+Complete user journey maps
+
+C. API Integration Reference
+
+All API endpoints used by frontend
+
+D. Component API Reference
+
+Props for all components
+
+E. Style Guide
+
+Complete design system documentation
+
+🎨 Output Format Requirements Document Structure
+
+Markdown format Table of contents with links Code blocks with syntax highlighting Tables for structured data ASCII diagrams for layouts Detailed examples
+
+Code Examples
+
+TypeScript with proper types Complete, copy-paste ready Inline comments Multiple examples per concept
+
+Wireframes
+
+ASCII art for simple layouts Detailed textual descriptions for complex layouts Component breakdowns
+
+Writing Style
+
+Technical and precise Assume audience is experienced frontend developers Explain "why" not just "what" Include best practices Mention trade-offs
+
+✅ Quality Checklist Ensure specification includes:
+
+All pages fully specified All components documented API integration complete State management strategy clear Security implementation detailed Responsive design addressed Accessibility requirements met Testing strategy defined Performance considerations included Build/deployment guide provided
+
+📊 Deliverable A single, comprehensive Frontend Technical Specification Document in Markdown format containing 12,000-15,000 words with:
+
+Complete page specifications Component library documentation API integration details State management architecture Security implementation Testing strategies Deployment guides
+
+Target Audience: Frontend developers, UI/UX designers, QA engineers who will

@@ -36,15 +36,12 @@ public class ServiceDefinition {
     @Column(nullable = false)
     private String version;
 
-    @Column(nullable = false)
-    private String schemaId;
-
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "schema_id", referencedColumnName = "id", insertable = false, updatable = false)
+    @JoinColumn(name = "schema_id", referencedColumnName = "id", nullable = false)
     private SchemaMetadata schemaMetadata;
 
     @Lob
-    @Column(columnDefinition = "CLOB")
+    @Column(columnDefinition = "TEXT")
     private String wsdlContent;
 
     @Column

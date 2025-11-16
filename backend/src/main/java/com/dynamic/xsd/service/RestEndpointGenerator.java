@@ -25,6 +25,7 @@ import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Generates and registers dynamic REST endpoints for POJO classes.

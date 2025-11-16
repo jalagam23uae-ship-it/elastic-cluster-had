@@ -32,4 +32,6 @@ public interface EndpointMappingRepository extends JpaRepository<EndpointMapping
     long countByServiceDefinition(ServiceDefinition serviceDefinition);
 
     long countByServiceDefinitionAndEndpointType(ServiceDefinition serviceDefinition, EndpointType endpointType);
+
+    List<EndpointMapping> findByServiceDefinition(ServiceDefinition serviceDefinition);
 }

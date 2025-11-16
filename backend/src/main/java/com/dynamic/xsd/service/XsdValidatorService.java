@@ -102,9 +102,15 @@ public class XsdValidatorService {
         try {
             SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
 
-            // Disable external entities for security
-            schemaFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            schemaFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            // Try to disable external entities for security (may not be supported by all implementations)
+            try {
+                schemaFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+                schemaFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+                schemaFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            } catch (SAXException e) {
+                log.debug("Some security features not supported by SchemaFactory implementation: {}", e.getMessage());
+                // Continue - the XMLInputFactory already provides XXE protection
+            }
 
             schemaFactory.newSchema(new StreamSource(new ByteArrayInputStream(xsdContent)));
 

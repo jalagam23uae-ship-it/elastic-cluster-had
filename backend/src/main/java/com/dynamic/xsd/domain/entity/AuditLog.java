@@ -52,6 +52,15 @@ public class AuditLog {
     @Column
     private String ipAddress;
 
+    @Column(length = 500)
+    private String userAgent;
+
+    @Column
+    private String requestId;
+
+    @Column
+    private Long durationMs;
+
     @Column(length = 5000)
     private String errorMessage;
 

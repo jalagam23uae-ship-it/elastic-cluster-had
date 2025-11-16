@@ -3,6 +3,7 @@ package com.dynamic.xsd.controller;
 import com.dynamic.xsd.domain.entity.SchemaMetadata;
 import com.dynamic.xsd.domain.entity.ServiceDefinition;
 import com.dynamic.xsd.domain.entity.User;
+import com.dynamic.xsd.domain.enums.UserRole;
 import com.dynamic.xsd.dto.ApiResponse;
 import com.dynamic.xsd.repository.EndpointMappingRepository;
 import com.dynamic.xsd.repository.SchemaMetadataRepository;
@@ -64,8 +65,8 @@ public class DashboardController {
             // User metrics
             metrics.totalUsers = userService.countAllUsers();
             metrics.activeUsers = userService.countActiveUsers();
-            metrics.adminUsers = userService.countUsersByRole(User.UserRole.ADMIN);
-            metrics.regularUsers = userService.countUsersByRole(User.UserRole.USER);
+            metrics.adminUsers = userService.countUsersByRole(UserRole.ADMIN);
+            metrics.regularUsers = userService.countUsersByRole(UserRole.USER);
 
             // System metrics
             metrics.timestamp = LocalDateTime.now();
@@ -104,7 +105,7 @@ public class DashboardController {
 
             // User statistics by role
             Map<String, Long> userStats = new HashMap<>();
-            for (User.UserRole role : User.UserRole.values()) {
+            for (UserRole role : UserRole.values()) {
                 userStats.put(role.name(), userService.countUsersByRole(role));
             }
             stats.put("usersByRole", userStats);
@@ -113,7 +114,7 @@ public class DashboardController {
             stats.put("totalEndpoints", endpointRepository.count());
 
             // Recent activity
-            stats.put("recentSchemas", schemaRepository.findTop10ByOrderByCreatedAtDesc());
+            stats.put("recentSchemas", schemaRepository.findTop10ByOrderByUploadedAtDesc());
             stats.put("recentServices", serviceRepository.findTop10ByOrderByDeployedAtDesc());
 
             return ResponseEntity.ok(ApiResponse.success(stats, "Statistics retrieved successfully"));

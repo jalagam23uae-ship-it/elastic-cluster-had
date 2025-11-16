@@ -1,5 +1,6 @@
 package com.dynamic.xsd.domain.entity;
 
+import com.dynamic.xsd.domain.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -70,9 +71,18 @@ public class User {
     @Builder.Default
     private Set<String> permissions = new HashSet<>();
 
-    public enum UserRole {
-        ADMIN,
-        DEVELOPER,
-        USER
+    @Column
+    @Builder.Default
+    private Boolean accountLocked = false;
+
+    @Column
+    @Builder.Default
+    private Integer failedLoginAttempts = 0;
+
+    /**
+     * Check if user account is active and not locked
+     */
+    public boolean isActive() {
+        return Boolean.TRUE.equals(active) && !Boolean.TRUE.equals(accountLocked);
     }
 }
