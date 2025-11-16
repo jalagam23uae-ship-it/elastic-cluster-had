@@ -1,3 +1,4 @@
+# Multi-stage build for Spring Boot backend
 FROM eclipse-temurin:21-jdk-alpine AS build
 
 WORKDIR /app
@@ -16,14 +17,11 @@ COPY src ./src
 # Build application
 RUN ./mvnw clean package -DskipTests
 
-# Runtime stage
-FROM eclipse-temurin:21-jre-alpine
-
-WORKDIR /app
-
-# Install required tools (for Java Compiler API - we need JDK, not JRE)
-# So we'll use JDK image instead
+# Runtime stage (must use JDK for Java Compiler API)
 FROM eclipse-temurin:21-jdk-alpine
+
+# Install curl for health checks
+RUN apk add --no-cache curl
 
 WORKDIR /app
 
@@ -47,9 +45,12 @@ USER appuser
 # Expose port
 EXPOSE 8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
+# Set default JVM options (can be overridden by environment variable)
+ENV JAVA_OPTS="-Xmx1g -Xms512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
 
-# Run application
-ENTRYPOINT ["java", "-Xmx1g", "-Xms512m", "-jar", "app.jar"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8080/actuator/health || exit 1
+
+# Run application with environment variable support
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
