@@ -1,864 +1,762 @@
 # Dynamic XSD Service Generation Platform
 
-A powerful Spring Boot 3.x platform that dynamically generates REST APIs and SOAP Web Services from uploaded XSD (XML Schema Definition) files. Upload an XSD schema, and the platform automatically creates Java POJOs, compiles them at runtime, and exposes them as fully functional REST and SOAP services—all without restarting the application.
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Java](https://img.shields.io/badge/Java-21-orange.svg)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.0-brightgreen.svg)
+![React](https://img.shields.io/badge/React-18.3.1-61dafb.svg)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue.svg)
 
-## 🚀 Features
+A comprehensive platform that **automatically generates and deploys REST and SOAP web services** from XSD (XML Schema Definition) files at runtime.
+
+## 🌟 Features
 
 ### Core Capabilities
-- **Dynamic XSD Processing**: Upload XSD files and automatically generate services
-- **POJO Generation**: Uses JAXB XJC API to generate Java classes from XSD schemas
-- **Runtime Compilation**: Compiles generated sources using Java Compiler API
-- **Isolated Class Loading**: Custom ClassLoaders provide service isolation
-- **Dual Protocol Support**: Auto-generates both REST and SOAP endpoints
-- **Multi-Format Support**: REST APIs support both JSON and XML
-- **WSDL Generation**: Automatic WSDL generation for SOAP services
+- **📤 XSD Schema Upload** - Upload XSD files via drag-and-drop interface
+- **✅ Schema Validation** - Automatic XSD schema validation and parsing
+- **🔨 POJO Generation** - Generate Java POJOs with JAXB/Jackson annotations
+- **⚡ Runtime Compilation** - Compile generated code on-the-fly using JavaCompiler API
+- **🚀 Dynamic Deployment** - Deploy services without restarting the application
+- **🔄 REST & SOAP** - Generate both REST (JSON/XML) and SOAP endpoints
+- **📄 WSDL Generation** - Automatic WSDL document generation for SOAP services
+- **📊 Dashboard** - Real-time monitoring and statistics
+- **🔍 Service Catalog** - Browse and discover all available services
 
-### Technical Features
-- **Java 21** with latest language features
-- **Spring Boot 3.3.0** with Spring Web and Spring Web Services
-- **JAXB 4.x** for XML binding and code generation
-- **Woodstox** for high-performance XML parsing
-- **Jackson** for JSON processing
-- **H2/PostgreSQL** for metadata storage
-- **OpenAPI/Swagger** for API documentation
-- **Spring Boot Actuator** for monitoring and metrics
+### Advanced Features
+- **🛡️ Rate Limiting** - Token bucket algorithm for API throttling
+- **📝 Audit Logging** - Comprehensive audit trail for all operations
+- **📈 Metrics Collection** - Time-series metrics for monitoring
+- **🔐 Security** - Spring Security with JWT (ready for integration)
+- **🎯 Service Management** - Deploy, undeploy, and manage services
+- **🔎 Search & Discovery** - Search services by name and description
+- **📦 Endpoint Management** - View and manage all generated endpoints
 
-### Security & Validation
-- XXE (XML External Entity) attack prevention
-- XML bomb attack prevention
-- Schema complexity validation
-- File size limits
-- Input validation with Bean Validation
-
-## 📋 Table of Contents
-
-- [Architecture](#architecture)
-- [Prerequisites](#prerequisites)
-- [Quick Start](#quick-start)
-- [Project Structure](#project-structure)
-- [API Documentation](#api-documentation)
-- [How It Works](#how-it-works)
-- [Usage Examples](#usage-examples)
-- [Configuration](#configuration)
-- [Development](#development)
-- [Troubleshooting](#troubleshooting)
+---
 
 ## 🏗️ Architecture
 
-### High-Level Architecture
-
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     Client Applications                      │
-│            (Web UI, Postman, SOAP Client, etc.)             │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-                      ▼
+│                     Frontend (React)                        │
+│  - File Upload (Drag & Drop)                                │
+│  - Dashboard & Analytics                                    │
+│  - Service Management                                       │
+│  - Schema Management                                        │
+└────────────────┬────────────────────────────────────────────┘
+                 │ HTTP/REST
+                 ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                   Spring Boot Application                    │
-├─────────────────────────────────────────────────────────────┤
-│  ┌──────────────────┐      ┌──────────────────┐            │
-│  │  Schema Mgmt API │      │  Dynamic REST    │            │
-│  │  (Upload/Delete) │      │  APIs (JSON/XML) │            │
-│  └──────────────────┘      └──────────────────┘            │
-│  ┌──────────────────┐      ┌──────────────────┐            │
-│  │  Service Mgmt    │      │  SOAP Services   │            │
-│  │  API             │      │  (WSDL)          │            │
-│  └──────────────────┘      └──────────────────┘            │
-├─────────────────────────────────────────────────────────────┤
-│                   Orchestration Layer                        │
-│  ┌────────────────────────────────────────────────────┐    │
-│  │         Schema Management Service                   │    │
-│  └────────────────────────────────────────────────────┘    │
-├─────────────────────────────────────────────────────────────┤
-│                      Core Services                           │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │ XSD Validator│  │ POJO Generator│  │   Compiler   │     │
-│  │  (Woodstox)  │  │  (JAXB XJC)   │  │  (Java API)  │     │
-│  └──────────────┘  └──────────────┘  └──────────────┘     │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │  ClassLoader │  │ REST Generator│  │ SOAP Generator│     │
-│  │   Manager    │  │               │  │               │     │
-│  └──────────────┘  └──────────────┘  └──────────────┘     │
-├─────────────────────────────────────────────────────────────┤
-│                   Persistence Layer                          │
-│  ┌────────────┐  ┌────────────┐  ┌────────────┐           │
-│  │  Schema    │  │  Service   │  │  Audit     │           │
-│  │  Metadata  │  │ Definition │  │    Log     │           │
-│  └────────────┘  └────────────┘  └────────────┘           │
-├─────────────────────────────────────────────────────────────┤
-│                  Database (H2/PostgreSQL)                    │
+│                  Backend (Spring Boot)                      │
+│  ┌──────────────┬──────────────┬─────────────────────────┐ │
+│  │   Upload     │  Validation  │    Code Generation      │ │
+│  │   Service    │   Service    │      Service            │ │
+│  └──────────────┴──────────────┴─────────────────────────┘ │
+│  ┌──────────────┬──────────────┬─────────────────────────┐ │
+│  │ Compilation  │ Deployment   │  Dynamic Endpoint       │ │
+│  │   Service    │   Service    │    Registration         │ │
+│  └──────────────┴──────────────┴─────────────────────────┘ │
+│  ┌──────────────┬──────────────┬─────────────────────────┐ │
+│  │ Rate Limit   │ Audit Log    │   Metrics Collection    │ │
+│  │   Service    │   Service    │      Service            │ │
+│  └──────────────┴──────────────┴─────────────────────────┘ │
+└────────────────┬────────────────────────────────────────────┘
+                 │ JDBC
+                 ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    PostgreSQL Database                      │
+│  - Schema Metadata                                          │
+│  - Service Definitions                                      │
+│  - Endpoint Mappings                                        │
+│  - Audit Logs & Metrics                                     │
+│  - Rate Limit Buckets                                       │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Processing Flow
+### Request Flow
 
 ```
-Upload XSD
-    │
-    ▼
-XSD Validation (Security + Syntax)
-    │
-    ▼
-Parse XSD & Extract Metadata
-    │
-    ▼
-Generate Java POJOs (JAXB XJC)
-    │
-    ├─→ Add JAXB Annotations
-    └─→ Add Jackson Annotations
-    │
-    ▼
-Compile Java Sources (Runtime)
-    │
-    ▼
-Load Compiled Classes (Custom ClassLoader)
-    │
-    ▼
-Register Service (Ready for Deployment)
-    │
-    ▼
-Deploy Service
-    │
-    ├─→ Generate REST Endpoints
-    │   ├─→ POST /api/dynamic/{service}/{entity}
-    │   ├─→ GET  /api/dynamic/{service}/{entity}/{id}
-    │   ├─→ PUT  /api/dynamic/{service}/{entity}/{id}
-    │   └─→ DELETE /api/dynamic/{service}/{entity}/{id}
-    │
-    └─→ Generate SOAP Endpoints
-        ├─→ SOAP Service at /ws/{service}
-        └─→ WSDL at /ws/{service}?wsdl
+1. User uploads XSD → Frontend
+2. Frontend sends file → Backend /api/v1/schemas/upload
+3. Backend validates XSD → XSDValidationService
+4. Generate POJOs → XSDCodeGenerationService (JAXB xjc)
+5. Compile POJOs → DynamicCodeCompilationService (JavaCompiler)
+6. Store metadata → PostgreSQL
+7. User deploys schema → /api/v1/services/deploy/{schemaId}
+8. Generate endpoints → ServiceDeploymentService
+9. Register endpoints → DynamicEndpointRegistrationService
+10. Service available → /api/dynamic/{service-name}/**
 ```
 
-## 📦 Prerequisites
-
-### Required Software
-- **JDK 21** (OpenJDK or Oracle JDK)
-  - ⚠️ **Important**: Must be JDK, not JRE (Java Compiler API requires JDK)
-  - Verify: `java -version` and `javac -version`
-- **Maven 3.8+** or **Gradle 8+**
-- **Git**
-
-### Optional (for Production)
-- **PostgreSQL 14+** (if not using H2)
-- **Docker** (for containerized deployment)
-- **Node.js 18+** (for frontend development)
-
-### System Requirements
-- **Memory**: Minimum 2GB RAM (4GB+ recommended)
-- **Disk Space**: 1GB free space
-- **OS**: Linux, macOS, or Windows
+---
 
 ## 🚀 Quick Start
 
-### 1. Clone the Repository
+### Prerequisites
+
+- **Java 21** or higher
+- **Node.js 18** or higher
+- **PostgreSQL 15** or higher
+- **Maven 3.8** or higher
+- **Git**
+
+### 1. Clone Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/your-org/elastic-cluster-had.git
 cd elastic-cluster-had
 ```
 
-### 2. Setup PostgreSQL Database
-
-**Option A: Using Docker (Recommended)**
+### 2. Database Setup
 
 ```bash
-# Run the automated setup script
-./setup-database.sh
+# Create PostgreSQL database
+createdb xsd_platform
+
+# Or using psql
+psql -U postgres
+CREATE DATABASE xsd_platform;
+CREATE USER xsd_user WITH PASSWORD 'your_password';
+GRANT ALL PRIVILEGES ON DATABASE xsd_platform TO xsd_user;
+\q
 ```
 
-This will start PostgreSQL and pgAdmin in Docker containers.
-
-**Option B: Manual Setup**
-
-See [POSTGRES_SETUP.md](POSTGRES_SETUP.md) for detailed PostgreSQL installation and configuration instructions.
-
-### 3. Build the Backend
+### 3. Backend Setup
 
 ```bash
 cd backend
+
+# Configure application.yml (update database credentials)
+nano src/main/resources/application.yml
+
+# Build and run
 mvn clean install
-```
-
-### 4. Run the Application
-
-```bash
 mvn spring-boot:run
 ```
 
-Or run the JAR:
+Backend will start on **http://localhost:8080**
+
+### 4. Frontend Setup
 
 ```bash
-java -jar target/xsd-service-platform-1.0.0.jar
+cd ../frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
 ```
 
-### 5. Verify Installation
+Frontend will start on **http://localhost:5173**
 
-The application will start on **http://localhost:8080**
+### 5. Open Application
 
+Open your browser and navigate to:
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:8080
 - **Swagger UI**: http://localhost:8080/swagger-ui.html
-- **Actuator Health**: http://localhost:8080/actuator/health
-- **pgAdmin** (if using Docker): http://localhost:5050
-  - Email: admin@admin.com
-  - Password: admin
 
-### 6. Upload Your First XSD
+---
 
-Using curl:
+## 📖 Usage Guide
 
+### Upload XSD Schema
+
+1. Navigate to **Schema Management** page
+2. Click **"Upload XSD"** button
+3. Drag and drop your XSD file or click to browse
+4. Enter service name (e.g., `customer-service`)
+5. Optionally enter version and description
+6. Check **"Auto Deploy"** to deploy immediately
+7. Click **"Upload"**
+
+**Result:** Schema is validated, POJOs generated, code compiled, and stored
+
+### Deploy Service
+
+1. Navigate to **Services** page
+2. Click **"Deploy Service"**
+3. Select a schema from the dropdown
+4. Choose endpoint types:
+   - ✓ Enable REST endpoints (JSON/XML)
+   - ✓ Enable SOAP endpoints (WSDL)
+5. Click **"Deploy"**
+
+**Result:** Service is deployed with endpoints registered at runtime
+
+### Access Generated Endpoints
+
+#### REST Endpoints (JSON/XML)
 ```bash
-curl -X POST http://localhost:8080/api/v1/schema/upload \
-  -F "file=@sample-xsd/customer.xsd" \
-  -F "serviceName=customer-service" \
-  -F "version=1.0" \
-  -F "description=Customer management service"
+# GET - Retrieve all entities
+curl http://localhost:8080/api/dynamic/customer-service/Customer
+
+# GET - Retrieve by ID
+curl http://localhost:8080/api/dynamic/customer-service/Customer/1
+
+# POST - Create entity (JSON)
+curl -X POST http://localhost:8080/api/dynamic/customer-service/Customer \
+  -H "Content-Type: application/json" \
+  -d '{"name":"John Doe","email":"john@example.com"}'
+
+# POST - Create entity (XML)
+curl -X POST http://localhost:8080/api/dynamic/customer-service/Customer \
+  -H "Content-Type: application/xml" \
+  -d '<Customer><name>John Doe</name><email>john@example.com</email></Customer>'
+
+# PUT - Update entity
+curl -X PUT http://localhost:8080/api/dynamic/customer-service/Customer/1 \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Jane Doe","email":"jane@example.com"}'
+
+# DELETE - Delete entity
+curl -X DELETE http://localhost:8080/api/dynamic/customer-service/Customer/1
 ```
 
-Using Swagger UI:
-1. Navigate to http://localhost:8080/swagger-ui.html
-2. Find `POST /api/v1/schema/upload`
-3. Click "Try it out"
-4. Choose a file (use `sample-xsd/customer.xsd`)
-5. Fill in parameters
-6. Click "Execute"
+#### SOAP Endpoints (WSDL)
+```bash
+# Get WSDL
+curl http://localhost:8080/api/v1/services/wsdl/customer-service?wsdl
 
-## 📂 Project Structure
+# SOAP Request Example
+curl -X POST http://localhost:8080/soap/customer-service \
+  -H "Content-Type: text/xml" \
+  -d '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+        <soapenv:Body>
+          <ns:getCustomer xmlns:ns="http://example.com/customer">
+            <id>1</id>
+          </ns:getCustomer>
+        </soapenv:Body>
+      </soapenv:Envelope>'
+```
+
+### View Dashboard
+
+Navigate to **Dashboard** to see:
+- Total services, schemas, and endpoints
+- Total requests and average response time
+- Recent services
+- System status
+
+---
+
+## 📁 Project Structure
 
 ```
 elastic-cluster-had/
-├── backend/
+├── backend/                          # Spring Boot Backend
+│   ├── src/main/java/com/dynamic/xsd/
+│   │   ├── config/                   # Configuration classes
+│   │   │   ├── AsyncConfig.java      # Async/Scheduling config
+│   │   │   ├── RateLimitInterceptor.java
+│   │   │   ├── SecurityConfig.java
+│   │   │   └── WebMvcConfig.java
+│   │   ├── controller/               # REST Controllers
+│   │   │   ├── CatalogController.java       # Service catalog
+│   │   │   ├── DynamicServiceController.java # Dynamic endpoints
+│   │   │   ├── ManagementController.java    # Admin management
+│   │   │   ├── SchemaController.java        # Schema management
+│   │   │   └── ServiceController.java       # Service deployment
+│   │   ├── domain/
+│   │   │   ├── entity/               # JPA Entities
+│   │   │   │   ├── AuditLog.java
+│   │   │   │   ├── EndpointMapping.java
+│   │   │   │   ├── RateLimitBucket.java
+│   │   │   │   ├── SchemaMetadata.java
+│   │   │   │   ├── ServiceDefinition.java
+│   │   │   │   ├── ServiceMetric.java
+│   │   │   │   └── User.java
+│   │   │   └── enums/                # Enumerations
+│   │   ├── dto/                      # Data Transfer Objects
+│   │   ├── repository/               # Spring Data JPA Repositories
+│   │   ├── scheduler/                # Scheduled tasks
+│   │   │   └── CleanupScheduler.java
+│   │   └── service/                  # Business Logic Services
+│   │       ├── AuditLogService.java
+│   │       ├── DynamicCodeCompilationService.java
+│   │       ├── DynamicEndpointRegistrationService.java
+│   │       ├── MetricsCollectionService.java
+│   │       ├── RateLimitService.java
+│   │       ├── ServiceDeploymentService.java
+│   │       ├── XSDCodeGenerationService.java
+│   │       └── XSDValidationService.java
+│   ├── src/main/resources/
+│   │   ├── application.yml           # Main configuration
+│   │   ├── schema.sql                # Database schema
+│   │   └── data.sql                  # Seed data
+│   └── pom.xml                       # Maven dependencies
+│
+├── frontend/                         # React Frontend
 │   ├── src/
-│   │   ├── main/
-│   │   │   ├── java/com/dynamic/xsd/
-│   │   │   │   ├── config/                 # Configuration classes
-│   │   │   │   │   ├── DynamicServiceProperties.java
-│   │   │   │   │   └── WebConfig.java
-│   │   │   │   ├── controller/             # REST Controllers
-│   │   │   │   │   ├── SchemaManagementController.java
-│   │   │   │   │   └── GlobalExceptionHandler.java
-│   │   │   │   ├── domain/
-│   │   │   │   │   └── entity/             # JPA Entities
-│   │   │   │   │       ├── SchemaMetadata.java
-│   │   │   │   │       ├── ServiceDefinition.java
-│   │   │   │   │       ├── EndpointMapping.java
-│   │   │   │   │       ├── User.java
-│   │   │   │   │       └── AuditLog.java
-│   │   │   │   ├── dto/                    # Data Transfer Objects
-│   │   │   │   │   ├── SchemaUploadRequest.java
-│   │   │   │   │   ├── SchemaUploadResponse.java
-│   │   │   │   │   └── ...
-│   │   │   │   ├── repository/             # JPA Repositories
-│   │   │   │   │   ├── SchemaMetadataRepository.java
-│   │   │   │   │   └── ...
-│   │   │   │   ├── service/                # Business Logic
-│   │   │   │   │   ├── XsdValidatorService.java
-│   │   │   │   │   ├── PojoGeneratorService.java
-│   │   │   │   │   ├── DynamicCompilerService.java
-│   │   │   │   │   ├── SchemaManagementService.java
-│   │   │   │   │   └── classloader/
-│   │   │   │   │       ├── ServiceClassLoader.java
-│   │   │   │   │       └── ClassLoaderManager.java
-│   │   │   │   └── DynamicXsdServicePlatformApplication.java
-│   │   │   └── resources/
-│   │   │       ├── application.yml
-│   │   │       ├── application-dev.yml
-│   │   │       └── application-prod.yml
-│   │   └── test/
-│   └── pom.xml
-├── sample-xsd/                             # Sample XSD files
-│   ├── customer.xsd
-│   └── product.xsd
-└── README.md
+│   │   ├── api/                      # API Services
+│   │   │   ├── catalogService.ts
+│   │   │   ├── client.ts             # Axios client
+│   │   │   ├── metricsService.ts
+│   │   │   ├── schemaService.ts
+│   │   │   └── serviceService.ts
+│   │   ├── components/
+│   │   │   ├── common/               # Reusable components
+│   │   │   │   ├── Button.tsx
+│   │   │   │   ├── Card.tsx
+│   │   │   │   ├── FileUpload.tsx
+│   │   │   │   ├── Modal.tsx
+│   │   │   │   └── StatusBadge.tsx
+│   │   │   └── layout/               # Layout components
+│   │   │       ├── Header.tsx
+│   │   │       ├── MainLayout.tsx
+│   │   │       └── Sidebar.tsx
+│   │   ├── config/
+│   │   │   └── api.ts                # API configuration
+│   │   ├── pages/                    # Page components
+│   │   │   ├── Dashboard.tsx
+│   │   │   ├── SchemaManagement.tsx
+│   │   │   └── ServicesPage.tsx
+│   │   ├── types/                    # TypeScript types
+│   │   │   ├── api.ts
+│   │   │   ├── metrics.ts
+│   │   │   ├── schema.ts
+│   │   │   └── service.ts
+│   │   ├── App.tsx                   # Root component
+│   │   └── main.tsx                  # Entry point
+│   ├── package.json
+│   └── vite.config.ts
+│
+├── docker-compose.yml                # Docker orchestration
+├── .gitignore
+└── README.md                         # This file
 ```
 
-## 📚 API Documentation
-
-### Schema Management APIs
-
-#### 1. Upload XSD Schema
-
-**POST** `/api/v1/schema/upload`
-
-Uploads an XSD file and processes it (validation, POJO generation, compilation).
-
-**Request:**
-- Content-Type: `multipart/form-data`
-- Parameters:
-  - `file` (file, required): XSD file to upload
-  - `serviceName` (string, required): Unique service name (lowercase, alphanumeric, hyphens)
-  - `version` (string, optional): Version in x.y or x.y.z format (default: 1.0)
-  - `description` (string, optional): Service description
-  - `namespace` (string, optional): Target namespace (auto-detected if not provided)
-  - `autoDeploy` (boolean, optional): Auto-deploy after upload (default: false)
-
-**Response (201 Created):**
-```json
-{
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "serviceName": "customer-service",
-  "version": "1.0",
-  "namespace": "http://example.com/customer",
-  "status": "ACTIVE",
-  "uploadedAt": "2025-11-16T10:00:00",
-  "validationWarnings": [],
-  "message": "Schema uploaded and processed successfully"
-}
-```
-
-**Status Values:**
-- `VALIDATING`: XSD validation in progress
-- `VALIDATION_FAILED`: XSD validation failed
-- `GENERATING`: POJO generation in progress
-- `GENERATION_FAILED`: POJO generation failed
-- `COMPILING`: Compilation in progress
-- `COMPILATION_FAILED`: Compilation failed
-- `ACTIVE`: Successfully processed and ready for deployment
-- `DEPRECATED`: Schema marked for deletion
-
-#### 2. Get Schema by Service Name
-
-**GET** `/api/v1/schema/{serviceName}`
-
-Retrieves metadata for a specific schema.
-
-**Response (200 OK):**
-```json
-{
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "serviceName": "customer-service",
-  "version": "1.0",
-  "namespace": "http://example.com/customer",
-  "description": "Customer management service",
-  "status": "ACTIVE",
-  "uploadedBy": "admin",
-  "uploadedAt": "2025-11-16T10:00:00",
-  "updatedAt": "2025-11-16T10:01:00",
-  "generatedArtifacts": {
-    "pojos": [
-      "com.generated.customerservice.model.Customer",
-      "com.generated.customerservice.model.Address"
-    ],
-    "restEndpointCount": 5,
-    "soapOperationCount": 3
-  }
-}
-```
-
-#### 3. List All Schemas
-
-**GET** `/api/v1/schema/list`
-
-Retrieves a paginated list of all schemas with optional filtering.
-
-**Query Parameters:**
-- `status` (string, optional): Filter by status (ACTIVE, FAILED, etc.)
-- `search` (string, optional): Search by service name
-- `page` (integer, optional): Page number (default: 0)
-- `size` (integer, optional): Page size (default: 20)
-- `sort` (string, optional): Sort field and direction (e.g., `uploadedAt,desc`)
-
-**Response (200 OK):**
-```json
-{
-  "content": [
-    {
-      "id": "...",
-      "serviceName": "customer-service",
-      "status": "ACTIVE",
-      "uploadedAt": "2025-11-16T10:00:00",
-      ...
-    }
-  ],
-  "pageable": {
-    "pageNumber": 0,
-    "pageSize": 20
-  },
-  "totalElements": 42,
-  "totalPages": 3
-}
-```
-
-#### 4. Delete Schema
-
-**DELETE** `/api/v1/schema/{serviceName}`
-
-Deletes a schema and all associated resources (compiled classes, classloaders, XSD files).
-
-**Response (204 No Content)**
-
-### Error Responses
-
-All error responses follow this format:
-
-```json
-{
-  "timestamp": "2025-11-16T10:00:00",
-  "status": 400,
-  "error": "Bad Request",
-  "message": "Service name already exists: customer-service",
-  "path": "/api/v1/schema/upload",
-  "errors": [
-    {
-      "field": "serviceName",
-      "message": "Service name already exists",
-      "rejectedValue": "customer-service"
-    }
-  ],
-  "traceId": "abc123xyz"
-}
-```
-
-**Common Status Codes:**
-- `400 Bad Request`: Invalid input or validation failure
-- `404 Not Found`: Schema not found
-- `409 Conflict`: Service name already exists
-- `413 Payload Too Large`: File size exceeds limit
-- `500 Internal Server Error`: Unexpected server error
-
-## 🔧 How It Works
-
-### 1. XSD Validation
-
-When you upload an XSD file, the platform:
-
-- **Security Checks**:
-  - Prevents XXE (XML External Entity) attacks
-  - Prevents XML bomb attacks
-  - Validates file size limits
-
-- **Syntax Validation**:
-  - Uses javax.xml.validation.SchemaFactory
-  - Validates against W3C XML Schema standard
-
-- **Metadata Extraction**:
-  - Extracts target namespace
-  - Analyzes schema complexity
-  - Counts elements, types, and nesting depth
-
-### 2. POJO Generation
-
-Using **JAXB XJC API** (com.sun.tools.xjc):
-
-```java
-SchemaCompiler compiler = XJC.createSchemaCompiler();
-compiler.setDefaultPackageName("com.generated.{serviceName}.model");
-compiler.parseSchema(inputSource);
-S2JJAXBModel model = compiler.bind();
-JCodeModel codeModel = model.generateCode(null, null);
-codeModel.build(outputDirectory);
-```
-
-Generated POJOs include:
-
-- **JAXB Annotations**: `@XmlRootElement`, `@XmlElement`, `@XmlAttribute`
-- **Jackson Annotations**: `@JsonProperty`, `@JsonRootName` (added via post-processing)
-- **Bean Validation**: `@NotNull`, `@Size` (from XSD constraints)
-- **Lombok Support**: Can be added for cleaner code
-
-Example generated class:
-
-```java
-package com.generated.customerservice.model;
-
-import jakarta.xml.bind.annotation.*;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-@XmlRootElement(name = "Customer")
-@JsonRootName("Customer")
-public class Customer {
-
-    @XmlElement(required = true)
-    @JsonProperty("customerId")
-    private Long customerId;
-
-    @XmlElement(required = true)
-    @JsonProperty("firstName")
-    private String firstName;
-
-    // ... getters and setters
-}
-```
-
-### 3. Runtime Compilation
-
-Using **Java Compiler API** (javax.tools.JavaCompiler):
-
-```java
-JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-StandardJavaFileManager fileManager = compiler.getStandardFileManager(...);
-JavaCompiler.CompilationTask task = compiler.getTask(...);
-boolean success = task.call();
-```
-
-**Important**: Requires JDK (not JRE) to access the compiler.
-
-### 4. Dynamic Class Loading
-
-Custom **ServiceClassLoader** extends URLClassLoader:
-
-- **Isolated Class Loading**: Each service has its own classloader
-- **Parent-Last Delegation**: Optional for maximum isolation
-- **Class Caching**: Improves performance
-- **Proper Cleanup**: Prevents memory leaks
-
-```java
-ServiceClassLoader classLoader = new ServiceClassLoader(
-    serviceName,
-    classPath,
-    parentClassLoader,
-    parentFirst
-);
-Class<?> clazz = classLoader.loadClass("com.generated.customerservice.model.Customer");
-```
-
-### 5. Service Deployment (Future)
-
-The platform will dynamically:
-
-- **REST Endpoints**:
-  - Generate `@RestController` classes
-  - Register with `RequestMappingHandlerMapping`
-  - Support JSON and XML (Content Negotiation)
-
-- **SOAP Services**:
-  - Generate `@Endpoint` classes
-  - Create WSDL dynamically
-  - Register with Spring WS endpoint registry
-
-## 💡 Usage Examples
-
-### Example 1: Upload Customer Service XSD
-
-```bash
-curl -X POST http://localhost:8080/api/v1/schema/upload \
-  -F "file=@sample-xsd/customer.xsd" \
-  -F "serviceName=customer-service" \
-  -F "version=1.0" \
-  -F "description=Customer management service"
-```
-
-**Response:**
-```json
-{
-  "id": "abc123",
-  "serviceName": "customer-service",
-  "version": "1.0",
-  "namespace": "http://example.com/customer",
-  "status": "ACTIVE",
-  "uploadedAt": "2025-11-16T10:00:00",
-  "message": "Schema uploaded and processed successfully"
-}
-```
-
-### Example 2: List All Schemas
-
-```bash
-curl -X GET "http://localhost:8080/api/v1/schema/list?page=0&size=10&status=ACTIVE"
-```
-
-### Example 3: Get Schema Details
-
-```bash
-curl -X GET "http://localhost:8080/api/v1/schema/customer-service"
-```
-
-### Example 4: Delete Schema
-
-```bash
-curl -X DELETE "http://localhost:8080/api/v1/schema/customer-service"
-```
-
-## ⚙️ Configuration
-
-### Application Properties
-
-Edit `backend/src/main/resources/application.yml`:
-
-```yaml
-dynamic-service:
-  xsd:
-    storage-path: ./xsd-storage          # XSD file storage location
-    max-file-size: 5242880               # Max file size in bytes (5MB)
-    validation-enabled: true             # Enable XSD validation
-
-  compilation:
-    temp-directory: ./temp/compile       # Temporary compilation directory
-    output-directory: ./temp/classes     # Compiled class output directory
-    keep-sources: true                   # Keep generated source files
-    java-version: "21"                   # Java version for compilation
-
-  classloader:
-    isolation-enabled: true              # Enable classloader isolation
-    parent-first: false                  # Use parent-last delegation
-    max-services: 100                    # Maximum number of services
-
-  rest:
-    base-path: /api/dynamic              # Base path for dynamic REST APIs
-    versioning-enabled: true             # Enable API versioning
-    default-page-size: 20                # Default pagination size
-
-  soap:
-    base-path: /ws                       # Base path for SOAP services
-    wsdl-enabled: true                   # Enable WSDL generation
-    soap-version: "1.2"                  # SOAP version (1.1 or 1.2)
-```
-
-### Database Configuration
-
-#### H2 (Development)
+---
+
+## 🛠️ Technology Stack
+
+### Backend
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| Java | 21 | Programming language |
+| Spring Boot | 3.5.0 | Application framework |
+| Spring Data JPA | 3.5.0 | Data access layer |
+| PostgreSQL | 15+ | Database |
+| HikariCP | Latest | Connection pooling |
+| JAXB | 4.0.5 | XML binding (POJO generation) |
+| Jackson | Latest | JSON serialization |
+| Lombok | Latest | Boilerplate reduction |
+| Springdoc OpenAPI | Latest | API documentation |
+
+### Frontend
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| React | 18.3.1 | UI framework |
+| TypeScript | 5.9.3 | Type safety |
+| Vite | 7.2.2 | Build tool |
+| TanStack Query | 5.90.9 | Server state management |
+| React Router | 7.9.6 | Routing |
+| Axios | 1.13.2 | HTTP client |
+| Tailwind CSS | 4.1.17 | Styling |
+| React Dropzone | Latest | File upload |
+| React Hot Toast | Latest | Notifications |
+| Lucide React | Latest | Icons |
+| date-fns | Latest | Date formatting |
+
+### Infrastructure
+- **Docker** - Containerization
+- **Docker Compose** - Multi-container orchestration
+- **Nginx** - Reverse proxy (in Docker setup)
+
+---
+
+## 🔧 Configuration
+
+### Backend Configuration (`application.yml`)
 
 ```yaml
 spring:
   datasource:
-    url: jdbc:h2:mem:xsdplatform
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-```
-
-#### PostgreSQL (Production)
-
-```yaml
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/xsdplatform
-    username: postgres
-    password: yourpassword
+    url: jdbc:postgresql://localhost:5432/xsd_platform
+    username: xsd_user
+    password: your_password
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: validate  # Uses schema.sql
+    show-sql: true
+
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql
+
+server:
+  port: 8080
+
+# Application settings
+app:
+  xsd:
+    upload-dir: ./uploads
+    generated-src-dir: ./generated-sources
+    compiled-classes-dir: ./compiled-classes
+    max-file-size: 5MB
+
+  rate-limit:
+    default-max-tokens: 100
+    default-refill-rate: 10  # tokens per second
+
+  cleanup:
+    audit-retention-days: 90
+    metrics-retention-days: 30
 ```
 
-### Profiles
-
-- **dev**: Development profile with debug logging
-- **prod**: Production profile with optimized settings
-
-Run with profile:
+### Frontend Configuration (`.env`)
 
 ```bash
-mvn spring-boot:run -Dspring-boot.run.profiles=prod
+VITE_API_BASE_URL=http://localhost:8080
 ```
 
-Or:
+---
 
-```bash
-java -jar -Dspring.profiles.active=prod target/xsd-service-platform-1.0.0.jar
-```
+## 📊 API Documentation
 
-## 🛠️ Development
+### Schema Management
+- `POST /api/v1/schemas/upload` - Upload XSD schema
+- `GET /api/v1/schemas` - List schemas (paginated)
+- `GET /api/v1/schemas/{serviceName}` - Get schema details
+- `DELETE /api/v1/schemas/{serviceName}` - Delete schema
 
-### Building from Source
+### Service Deployment
+- `POST /api/v1/services/deploy/{schemaId}` - Deploy service
+- `POST /api/v1/services/undeploy/{serviceId}` - Undeploy service
+- `GET /api/v1/services/status/{serviceId}` - Get deployment status
+- `GET /api/v1/services/wsdl/{serviceName}?wsdl` - Get WSDL document
+
+### Catalog & Discovery
+- `GET /api/v1/catalog/services` - List all deployed services
+- `GET /api/v1/catalog/services/{serviceName}` - Get service details
+- `GET /api/v1/catalog/schemas` - List schemas
+- `GET /api/v1/catalog/endpoints` - List all endpoints
+- `GET /api/v1/catalog/search?query={q}` - Search services
+
+### Management & Monitoring
+- `GET /api/v1/management/rate-limit/{username}` - Get rate limit status
+- `GET /api/v1/management/audit` - Get audit logs (Admin only)
+- `GET /api/v1/management/metrics/{serviceId}` - Get service metrics
+- `POST /api/v1/management/cleanup/audit-logs` - Cleanup old audit logs
+
+### Dynamic Endpoints (Generated at Runtime)
+- `GET /api/dynamic/{serviceName}/{EntityName}` - Get all entities
+- `GET /api/dynamic/{serviceName}/{EntityName}/{id}` - Get entity by ID
+- `POST /api/dynamic/{serviceName}/{EntityName}` - Create entity
+- `PUT /api/dynamic/{serviceName}/{EntityName}/{id}` - Update entity
+- `DELETE /api/dynamic/{serviceName}/{EntityName}/{id}` - Delete entity
+
+**Full API documentation available at:** http://localhost:8080/swagger-ui.html
+
+---
+
+## 🧪 Testing
+
+### Backend Tests
 
 ```bash
 cd backend
-mvn clean package
+mvn test                    # Run all tests
+mvn test -Dtest=SchemaControllerTest  # Run specific test
 ```
 
-### Running Tests
+### Frontend Tests
 
 ```bash
-mvn test
+cd frontend
+npm run lint                # TypeScript type checking
+npm run build               # Production build test
 ```
 
-### Code Style
+### Integration Testing
 
-The project follows standard Java conventions. Use your IDE's formatter with:
-- Indentation: 4 spaces
-- Line length: 120 characters
+```bash
+# Start backend
+cd backend && mvn spring-boot:run
 
-### Adding New Features
+# In another terminal, test endpoints
+curl -X POST http://localhost:8080/api/v1/schemas/upload \
+  -F "file=@examples/customer.xsd" \
+  -F "serviceName=customer-service" \
+  -F "version=1.0"
+```
 
-1. Create feature branch: `git checkout -b feature/your-feature`
-2. Implement changes
-3. Write tests
-4. Commit: `git commit -m "Add: your feature description"`
-5. Push: `git push origin feature/your-feature`
-6. Create pull request
+---
+
+## 🐳 Docker Deployment
+
+### Using Docker Compose
+
+```bash
+# Build and start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
+**Services:**
+- **Backend**: http://localhost:8080
+- **Frontend**: http://localhost:3000
+- **PostgreSQL**: localhost:5432
+- **Nginx**: http://localhost (reverse proxy)
+
+---
+
+## 🔐 Security Features
+
+### Rate Limiting
+- Token bucket algorithm
+- Per-user, per-service, per-IP limits
+- Configurable max tokens and refill rates
+- Automatic bucket refill
+- Rate limit headers in responses
+
+### Audit Logging
+- All operations logged with timestamps
+- User tracking (username, IP, user agent)
+- Request/response correlation
+- Success/failure tracking
+- Duration tracking
+- Async logging for performance
+
+### Authentication (Ready for Integration)
+- JWT-based authentication prepared
+- Spring Security configured
+- User roles (ADMIN, USER, VIEWER)
+- Protected endpoints with `@PreAuthorize`
+
+**Note:** Authentication is currently disabled for development. Enable in `SecurityConfig.java`.
+
+---
+
+## 📈 Monitoring & Metrics
+
+### Available Metrics
+- Request count per service
+- Average response time
+- Error rates
+- Success rates
+- Throughput
+- Memory usage
+- CPU usage
+
+### Time-Series Data
+- Metrics stored with timestamps
+- Configurable aggregation windows (1m, 5m, 15m, 1h, 1d)
+- Statistical analysis (avg, min, max, percentiles)
+- JSONB tags for flexible querying
+
+### Cleanup Jobs
+- **Audit logs**: Retained for 90 days (configurable)
+- **Metrics**: Retained for 30 days (configurable)
+- **Scheduled cleanup**: Daily at 2 AM
+- **Health metrics**: Collected every 60 seconds
+
+---
 
 ## 🐛 Troubleshooting
 
-### Issue: "Java Compiler not available"
-
-**Cause**: Running with JRE instead of JDK
-
-**Solution**:
+### Database Connection Issues
 ```bash
-# Check Java installation
-java -version
-javac -version  # Should work
+# Verify PostgreSQL is running
+pg_isready
 
-# Set JAVA_HOME to JDK
-export JAVA_HOME=/path/to/jdk-21
+# Check connection
+psql -U xsd_user -d xsd_platform
+
+# Reset database
+dropdb xsd_platform
+createdb xsd_platform
 ```
 
-### Issue: "Class loading failed"
+### Backend Compilation Issues
+```bash
+# Clean and rebuild
+mvn clean install -DskipTests
 
-**Cause**: Compilation errors or missing dependencies
-
-**Solution**:
-- Check compilation errors in logs
-- Verify XSD is valid
-- Check file permissions on temp directories
-
-### Issue: "File size exceeds maximum"
-
-**Cause**: XSD file too large
-
-**Solution**:
-Update `application.yml`:
-```yaml
-dynamic-service:
-  xsd:
-    max-file-size: 10485760  # 10MB
+# Check Java version
+java -version  # Should be 21+
 ```
 
-### Issue: "Schema validation failed"
+### Frontend Build Issues
+```bash
+# Clear cache and reinstall
+rm -rf node_modules package-lock.json
+npm install
 
-**Cause**: Invalid XSD syntax or security issues
-
-**Solution**:
-- Validate XSD with online validator
-- Remove DOCTYPE declarations
-- Remove external entity references
-
-### Enable Debug Logging
-
-```yaml
-logging:
-  level:
-    com.dynamic: DEBUG
-    org.springframework: DEBUG
+# Check Node version
+node -v  # Should be 18+
 ```
 
-## 📊 Monitoring
+### CORS Issues
+- Ensure frontend URL is in `WebMvcConfig.java` allowed origins
+- Default: `http://localhost:3000` and `http://localhost:5173`
+- Add custom origins if needed
 
-### Health Check
+### File Upload Issues
+- Check `app.xsd.max-file-size` in `application.yml`
+- Verify upload directory exists and is writable
+- Check disk space
+
+---
+
+## 🚀 Deployment to Production
+
+### Backend
 
 ```bash
-curl http://localhost:8080/actuator/health
-```
-
-### Metrics
-
-```bash
-curl http://localhost:8080/actuator/metrics
-```
-
-### Prometheus Metrics
-
-```bash
-curl http://localhost:8080/actuator/prometheus
-```
-
-## 🔒 Security Considerations
-
-- **XXE Prevention**: External entities are disabled
-- **XML Bomb Prevention**: Entity expansion limits enforced
-- **File Size Limits**: Configurable maximum file size
-- **Input Validation**: All inputs validated with Bean Validation
-- **Audit Logging**: All operations logged to database
-
-## 🚢 Production Deployment
-
-### Using JAR
-
-```bash
-java -Xmx2g -jar \
-  -Dspring.profiles.active=prod \
-  -Dserver.port=8080 \
-  target/xsd-service-platform-1.0.0.jar
-```
-
-### Using Docker
-
-**Start Full Stack (PostgreSQL + Backend):**
-
-```bash
-# Start PostgreSQL
-docker-compose up -d postgres
-
-# Build and start backend (uncomment backend service in docker-compose.yml first)
-docker-compose up -d backend
-```
-
-**Or build and run backend Docker image manually:**
-
-```bash
+# Build JAR
 cd backend
-docker build -t xsd-platform .
-docker run -p 8080:8080 \
-  -e SPRING_PROFILES_ACTIVE=prod \
-  -e DB_HOST=postgres \
-  -e DB_PASSWORD=yourpassword \
-  xsd-platform
+mvn clean package -DskipTests
+
+# Run JAR
+java -jar target/xsd-platform-backend-1.0.0.jar \
+  --spring.profiles.active=production
+
+# Or with custom config
+java -jar target/xsd-platform-backend-1.0.0.jar \
+  --spring.config.location=/etc/xsd-platform/application.yml
+```
+
+### Frontend
+
+```bash
+# Build for production
+cd frontend
+npm run build
+
+# Output in dist/
+# Serve with Nginx, Apache, or any static file server
 ```
 
 ### Environment Variables
 
 ```bash
-export DB_HOST=postgres-server
-export DB_PORT=5432
-export DB_NAME=xsdplatform
-export DB_USERNAME=dbuser
-export DB_PASSWORD=dbpass
-export JWT_SECRET=your-secret-key
+# Backend
+export SPRING_DATASOURCE_URL=jdbc:postgresql://prod-db:5432/xsd_platform
+export SPRING_DATASOURCE_USERNAME=xsd_user
+export SPRING_DATASOURCE_PASSWORD=secure_password
+export APP_XSD_UPLOAD_DIR=/var/xsd-platform/uploads
+
+# Frontend
+export VITE_API_BASE_URL=https://api.yourcompany.com
 ```
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
-
-## 📧 Support
-
-For issues and questions:
-- Open an issue on GitHub
-- Check existing documentation
-- Review troubleshooting section
-
-## 🎯 Roadmap
-
-### Phase 1 (Current)
-- ✅ XSD validation and parsing
-- ✅ POJO generation with JAXB
-- ✅ Dynamic compilation
-- ✅ Custom classloader management
-- ✅ Schema management APIs
-
-### Phase 2 (Next)
-- 🔲 Dynamic REST controller generation
-- 🔲 Dynamic SOAP endpoint generation
-- 🔲 Service deployment orchestration
-- 🔲 WSDL generation
-- 🔲 OpenAPI documentation generation
-
-### Phase 3 (Future)
-- 🔲 React frontend with TypeScript
-- 🔲 User authentication and authorization
-- 🔲 Service versioning
-- 🔲 Hot reload support
-- 🔲 GraphQL API generation
-- 🔲 Advanced caching strategies
-
-## 🙏 Acknowledgments
-
-- Spring Boot team for the excellent framework
-- JAXB team for XML binding capabilities
-- Woodstox for high-performance XML processing
-- All contributors and users of this platform
 
 ---
 
-**Built with ❤️ using Java 21 and Spring Boot 3.x**
+## 📝 Development Workflow
+
+### Adding New Features
+
+1. **Backend:**
+   - Create entity in `domain/entity/`
+   - Create repository in `repository/`
+   - Create service in `service/`
+   - Create controller in `controller/`
+   - Add tests
+
+2. **Frontend:**
+   - Create TypeScript types in `types/`
+   - Create API service in `api/`
+   - Create component/page in `components/` or `pages/`
+   - Add to router in `App.tsx`
+
+### Code Style
+
+**Backend (Java):**
+- Follow Google Java Style Guide
+- Use Lombok for boilerplate
+- Add Javadoc for public methods
+- Use meaningful variable names
+
+**Frontend (TypeScript):**
+- Use functional components with hooks
+- Follow React best practices
+- Add TypeScript types for everything
+- Use Tailwind for styling
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+
+## 👥 Team
+
+- **Backend Development**: Spring Boot, PostgreSQL, XSD Processing
+- **Frontend Development**: React, TypeScript, Tailwind CSS
+- **DevOps**: Docker, Docker Compose, CI/CD
+
+---
+
+## 📞 Support
+
+For issues and questions:
+- **GitHub Issues**: https://github.com/your-org/elastic-cluster-had/issues
+- **Documentation**: https://docs.yourcompany.com/xsd-platform
+- **Email**: support@yourcompany.com
+
+---
+
+## 🗺️ Roadmap
+
+### Phase 1 (Current) ✅
+- [x] XSD upload and validation
+- [x] POJO generation
+- [x] Runtime compilation
+- [x] Service deployment
+- [x] REST/SOAP endpoint generation
+- [x] Dashboard and monitoring
+- [x] Rate limiting
+- [x] Audit logging
+
+### Phase 2 (Planned)
+- [ ] JWT Authentication implementation
+- [ ] User management UI
+- [ ] Advanced metrics visualization
+- [ ] Service versioning
+- [ ] API testing interface
+- [ ] Export WSDL/OpenAPI specs
+- [ ] Bulk operations
+
+### Phase 3 (Future)
+- [ ] Multi-tenancy support
+- [ ] GraphQL endpoint generation
+- [ ] Service mesh integration
+- [ ] Advanced caching
+- [ ] Real-time notifications
+- [ ] Service orchestration
+- [ ] AI-powered schema optimization
+
+---
+
+## ⭐ Acknowledgments
+
+- **JAXB** - XML binding and code generation
+- **Spring Boot** - Application framework
+- **React** - UI library
+- **PostgreSQL** - Robust database
+- **TanStack Query** - Server state management
+- **Tailwind CSS** - Utility-first CSS
+
+---
+
+Made with ❤️ by the XSD Platform Team
