@@ -32,7 +32,7 @@ public class DynamicServiceController {
 
     @PostMapping("/api/v1/services/deploy/{schemaId}")
     @Operation(summary = "Deploy Service", description = "Deploy a service from an uploaded schema")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> deployService(@PathVariable Long schemaId) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> deployService(@PathVariable String schemaId) {
         log.info("Deploy service request for schema ID: {}", schemaId);
 
         try {
@@ -60,7 +60,7 @@ public class DynamicServiceController {
 
     @PostMapping("/api/v1/services/undeploy/{schemaId}")
     @Operation(summary = "Undeploy Service", description = "Undeploy a running service")
-    public ResponseEntity<ApiResponse<String>> undeployService(@PathVariable Long schemaId) {
+    public ResponseEntity<ApiResponse<String>> undeployService(@PathVariable String schemaId) {
         log.info("Undeploy service request for schema ID: {}", schemaId);
 
         try {
@@ -76,7 +76,7 @@ public class DynamicServiceController {
 
     @PostMapping("/api/v1/services/redeploy/{schemaId}")
     @Operation(summary = "Redeploy Service", description = "Redeploy a service (undeploy + deploy)")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> redeployService(@PathVariable Long schemaId) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> redeployService(@PathVariable String schemaId) {
         log.info("Redeploy service request for schema ID: {}", schemaId);
 
         try {
@@ -105,7 +105,7 @@ public class DynamicServiceController {
     @GetMapping("/api/v1/services/status/{schemaId}")
     @Operation(summary = "Get Deployment Status", description = "Get deployment status for a schema")
     public ResponseEntity<ApiResponse<ServiceDeploymentService.DeploymentStatus>> getDeploymentStatus(
-            @PathVariable Long schemaId) {
+            @PathVariable String schemaId) {
         log.info("Get deployment status for schema ID: {}", schemaId);
 
         try {

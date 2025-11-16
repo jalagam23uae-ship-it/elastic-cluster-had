@@ -1,10 +1,15 @@
 package com.dynamic.xsd.domain.entity;
 
+import com.dynamic.xsd.domain.enums.EndpointType;
+import com.dynamic.xsd.domain.enums.HttpMethod;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
 
 /**
  * Entity representing endpoint mappings for generated services.
@@ -27,13 +32,14 @@ public class EndpointMapping {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private EndpointType type;
+    private EndpointType endpointType;
 
     @Column(nullable = false)
     private String path;
 
+    @Enumerated(EnumType.STRING)
     @Column
-    private String httpMethod;  // For REST endpoints (GET, POST, PUT, DELETE, PATCH)
+    private HttpMethod httpMethod;  // For REST endpoints (GET, POST, PUT, DELETE, PATCH)
 
     @Column
     private String operationName;  // For SOAP operations
@@ -42,10 +48,19 @@ public class EndpointMapping {
     private String description;
 
     @Column(nullable = false)
-    private Boolean active;
+    @Builder.Default
+    private Boolean active = true;
 
-    public enum EndpointType {
-        REST,
-        SOAP
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    // Backward compatibility aliases
+    public EndpointType getType() {
+        return endpointType;
+    }
+
+    public void setType(EndpointType type) {
+        this.endpointType = type;
     }
 }

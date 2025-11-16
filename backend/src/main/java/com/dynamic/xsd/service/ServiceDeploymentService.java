@@ -41,7 +41,7 @@ public class ServiceDeploymentService {
      * Generates both REST and SOAP endpoints.
      */
     @Transactional
-    public DeploymentResult deployService(Long schemaId) {
+    public DeploymentResult deployService(String schemaId) {
         log.info("Starting service deployment for schema ID: {}", schemaId);
 
         SchemaMetadata schema = schemaRepository.findById(schemaId)
@@ -121,7 +121,7 @@ public class ServiceDeploymentService {
             result.error = e;
 
             // Update service status to FAILED if exists
-            serviceRepository.findBySchemaMetadata_Id(schemaId).ifPresent(service -> {
+            serviceRepository.findFirstBySchemaId(schemaId).ifPresent(service -> {
                 service.setStatus(ServiceStatus.FAILED);
                 serviceRepository.save(service);
             });
@@ -134,13 +134,13 @@ public class ServiceDeploymentService {
      * Undeploys a service and removes all its endpoints.
      */
     @Transactional
-    public void undeployService(Long schemaId) {
+    public void undeployService(String schemaId) {
         log.info("Starting service undeployment for schema ID: {}", schemaId);
 
         SchemaMetadata schema = schemaRepository.findById(schemaId)
             .orElseThrow(() -> new IllegalArgumentException("Schema not found: " + schemaId));
 
-        ServiceDefinition service = serviceRepository.findBySchemaMetadata_Id(schemaId)
+        ServiceDefinition service = serviceRepository.findFirstBySchemaId(schemaId)
             .orElse(null);
 
         if (service == null) {
@@ -183,7 +183,7 @@ public class ServiceDeploymentService {
      * Redeploys a service (undeploy + deploy).
      */
     @Transactional
-    public DeploymentResult redeployService(Long schemaId) {
+    public DeploymentResult redeployService(String schemaId) {
         log.info("Redeploying service for schema ID: {}", schemaId);
         undeployService(schemaId);
         return deployService(schemaId);
@@ -192,11 +192,11 @@ public class ServiceDeploymentService {
     /**
      * Gets deployment status for a schema.
      */
-    public DeploymentStatus getDeploymentStatus(Long schemaId) {
+    public DeploymentStatus getDeploymentStatus(String schemaId) {
         SchemaMetadata schema = schemaRepository.findById(schemaId)
             .orElseThrow(() -> new IllegalArgumentException("Schema not found: " + schemaId));
 
-        ServiceDefinition service = serviceRepository.findBySchemaMetadata_Id(schemaId)
+        ServiceDefinition service = serviceRepository.findFirstBySchemaId(schemaId)
             .orElse(null);
 
         DeploymentStatus status = new DeploymentStatus();
@@ -305,7 +305,7 @@ public class ServiceDeploymentService {
     public static class DeploymentResult {
         public boolean success;
         public String message;
-        public Long schemaId;
+        public String schemaId;
         public String serviceName;
         public List<EndpointMapping> restEndpoints = new ArrayList<>();
         public List<EndpointMapping> soapEndpoints = new ArrayList<>();
@@ -316,7 +316,7 @@ public class ServiceDeploymentService {
      * Status of a deployed service.
      */
     public static class DeploymentStatus {
-        public Long schemaId;
+        public String schemaId;
         public String serviceName;
         public ServiceStatus schemaStatus;
         public ServiceStatus serviceStatus;

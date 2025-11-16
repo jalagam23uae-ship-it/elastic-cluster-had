@@ -39,6 +39,12 @@ public class SchemaMetadata {
     @Column(nullable = false)
     private String namespace;
 
+    @Column(nullable = false)
+    private String targetNamespace;
+
+    @Column(nullable = false)
+    private String packageName;
+
     @Column(length = 1000)
     private String description;
 
@@ -63,6 +69,12 @@ public class SchemaMetadata {
 
     @Column
     private String xsdFilePath;
+
+    @Column
+    private String sourceOutputPath;
+
+    @Column
+    private String classOutputPath;
 
     @ElementCollection
     @CollectionTable(name = "generated_pojos", joinColumns = @JoinColumn(name = "schema_id"))
@@ -93,5 +105,12 @@ public class SchemaMetadata {
         ACTIVE,
         FAILED,
         DEPRECATED
+    }
+
+    /**
+     * Alias for uploadedAt to match repository queries that use createdAt.
+     */
+    public LocalDateTime getCreatedAt() {
+        return uploadedAt;
     }
 }

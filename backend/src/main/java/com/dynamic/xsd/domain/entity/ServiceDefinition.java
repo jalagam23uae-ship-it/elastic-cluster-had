@@ -39,6 +39,17 @@ public class ServiceDefinition {
     @Column(nullable = false)
     private String schemaId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "schema_id", referencedColumnName = "id", insertable = false, updatable = false)
+    private SchemaMetadata schemaMetadata;
+
+    @Lob
+    @Column(columnDefinition = "CLOB")
+    private String wsdlContent;
+
+    @Column
+    private String serviceVersion;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
