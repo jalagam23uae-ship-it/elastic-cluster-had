@@ -1,7 +1,7 @@
 package com.dynamic.xsd.domain.enums;
 
 /**
- * HTTP methods for REST endpoints.
+ * HTTP methods for REST endpoints and WebSocket.
  */
 public enum HttpMethod {
     GET,
@@ -10,5 +10,6 @@ public enum HttpMethod {
     PATCH,
     DELETE,
     HEAD,
-    OPTIONS
+    OPTIONS,
+    WS  // WebSocket connection
 }

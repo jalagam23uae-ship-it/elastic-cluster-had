@@ -5,6 +5,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FileCode2, Menu } from 'lucide-react';
+import { WebSocketStatus } from '../websocket/WebSocketStatus';
 
 export interface HeaderProps {
   onMenuClick: () => void;
@@ -38,6 +39,9 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
           {/* Right side actions */}
           <div className="flex items-center gap-4">
+            {/* WebSocket Status */}
+            <WebSocketStatus showText={true} showStats={false} />
+
             <div className="text-right hidden md:block">
               <p className="text-sm font-medium text-gray-900">Admin User</p>
               <p className="text-xs text-gray-500">Administrator</p>

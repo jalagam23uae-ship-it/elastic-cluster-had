@@ -85,6 +85,19 @@ public class ServiceDefinition {
     @Column(length = 2000)
     private String deploymentErrors;
 
+    @Column
+    @Builder.Default
+    private Boolean websocketEnabled = false;
+
+    @Column
+    private Integer websocketConnections;
+
+    @Column
+    private Long websocketMessagesSent;
+
+    @Column
+    private Long websocketMessagesReceived;
+
     public enum ServiceStatus {
         DEPLOYING,
         DEPLOYED,

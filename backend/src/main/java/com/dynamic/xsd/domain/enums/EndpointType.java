@@ -1,9 +1,10 @@
 package com.dynamic.xsd.domain.enums;
 
 /**
- * Type of endpoint (REST or SOAP).
+ * Type of endpoint (REST, SOAP, or WEBSOCKET).
  */
 public enum EndpointType {
     REST,
-    SOAP
+    SOAP,
+    WEBSOCKET
 }

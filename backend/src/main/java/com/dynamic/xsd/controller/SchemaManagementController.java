@@ -4,7 +4,10 @@ import com.dynamic.xsd.domain.entity.SchemaMetadata;
 import com.dynamic.xsd.dto.SchemaMetadataDto;
 import com.dynamic.xsd.dto.SchemaUploadRequest;
 import com.dynamic.xsd.dto.SchemaUploadResponse;
+import com.dynamic.xsd.model.XsdAnalysisResult;
+import com.dynamic.xsd.repository.SchemaMetadataRepository;
 import com.dynamic.xsd.service.SchemaManagementService;
+import com.dynamic.xsd.service.XsdParserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,6 +40,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class SchemaManagementController {
 
     private final SchemaManagementService schemaManagementService;
+    private final XsdParserService xsdParserService;
+    private final SchemaMetadataRepository schemaMetadataRepository;
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Upload XSD schema",
@@ -124,5 +129,31 @@ public class SchemaManagementController {
         schemaManagementService.deleteSchema(serviceName, deletedBy);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{serviceName}/fields")
+    @Operation(summary = "Analyze XSD schema fields",
+              description = "Analyzes the XSD schema and returns detailed field information including validation rules")
+    public ResponseEntity<XsdAnalysisResult> analyzeSchemaFields(
+            @Parameter(description = "Service name", required = true)
+            @PathVariable String serviceName
+    ) {
+        log.info("Analyzing schema fields for service: {}", serviceName);
+
+        SchemaMetadata schema = schemaMetadataRepository.findByServiceName(serviceName)
+                .orElseThrow(() -> new RuntimeException("Schema not found for service: " + serviceName));
+
+        if (schema.getXsdContent() == null || schema.getXsdContent().isEmpty()) {
+            return ResponseEntity.badRequest().body(
+                XsdAnalysisResult.builder()
+                    .success(false)
+                    .message("XSD content not found for service: " + serviceName)
+                    .totalFields(0)
+                    .build()
+            );
+        }
+
+        XsdAnalysisResult result = xsdParserService.analyzeXsd(schema.getXsdContent());
+        return ResponseEntity.ok(result);
     }
 }

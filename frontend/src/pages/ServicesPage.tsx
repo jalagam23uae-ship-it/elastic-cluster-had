@@ -15,24 +15,32 @@ import {
   FileText,
   Zap,
   Activity,
+  List,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import axios from 'axios';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import StatusBadge from '../components/common/StatusBadge';
+import FieldsViewModal from '../components/schema/FieldsViewModal';
 import catalogService, { type SchemaCatalogEntry } from '../api/catalogService';
 import serviceService from '../api/serviceService';
 import schemaService from '../api/schemaService';
 import { formatDistanceToNow } from 'date-fns';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 const ServicesPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [deployModalOpen, setDeployModalOpen] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [fieldsModalOpen, setFieldsModalOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<any>(null);
   const [selectedSchema, setSelectedSchema] = useState<SchemaCatalogEntry | null>(null);
+  const [fieldsAnalysis, setFieldsAnalysis] = useState<any>(null);
+  const [loadingFields, setLoadingFields] = useState(false);
 
   // Deploy options
   const [enableRest, setEnableRest] = useState(true);
@@ -108,6 +116,21 @@ const ServicesPage: React.FC = () => {
       setDetailModalOpen(true);
     } catch (error: any) {
       toast.error('Failed to load service details');
+    }
+  };
+
+  const handleViewFields = async (service: any) => {
+    try {
+      setLoadingFields(true);
+      const response = await axios.get(
+        `${API_BASE_URL}/api/v1/schemas/${service.serviceName}/fields`
+      );
+      setFieldsAnalysis(response.data);
+      setFieldsModalOpen(true);
+    } catch (error: any) {
+      toast.error('Failed to load schema fields');
+    } finally {
+      setLoadingFields(false);
     }
   };
 
@@ -249,6 +272,14 @@ const ServicesPage: React.FC = () => {
                           title="View details"
                         >
                           <Eye size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleViewFields(service)}
+                          className="text-blue-600 hover:text-blue-900"
+                          title="View fields"
+                          disabled={loadingFields}
+                        >
+                          <List size={18} />
                         </button>
                         <button
                           onClick={() => handleUndeploy(service)}
@@ -476,7 +507,7 @@ const ServicesPage: React.FC = () => {
               <div>
                 <p className="text-sm font-medium text-gray-500 mb-2">WSDL Document</p>
                 <a
-                  href={`/api/v1/services/wsdl/${selectedService.service.serviceName}?wsdl`}
+                  href={`${API_BASE_URL}/ws/${selectedService.service.serviceName}?wsdl`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors"
@@ -489,6 +520,19 @@ const ServicesPage: React.FC = () => {
             )}
           </div>
         </Modal>
+      )}
+
+      {/* Fields View Modal */}
+      {fieldsAnalysis && (
+        <FieldsViewModal
+          isOpen={fieldsModalOpen}
+          onClose={() => {
+            setFieldsModalOpen(false);
+            setFieldsAnalysis(null);
+          }}
+          serviceName={fieldsAnalysis.rootElement || 'Schema Fields'}
+          analysisResult={fieldsAnalysis}
+        />
       )}
     </div>
   );

@@ -34,6 +34,7 @@ public class ServiceDeploymentService {
     private final RestEndpointGenerator restEndpointGenerator;
     private final SoapServiceGenerator soapServiceGenerator;
     private final WsdlGenerator wsdlGenerator;
+    private final WebSocketServiceGenerator webSocketServiceGenerator;
 
     /**
      * Deploys a service based on schema metadata.
@@ -103,6 +104,15 @@ public class ServiceDeploymentService {
             result.soapEndpoints.addAll(soapEndpoints);
             saveEndpointMappings(serviceDefinition, soapEndpoints);
 
+            // Generate and register WebSocket endpoints (enabled by default)
+            List<EndpointMapping> webSocketEndpoints = webSocketServiceGenerator.generateWebSocketEndpoints(
+                schema.getServiceName(),
+                rootClasses
+            );
+            result.webSocketEndpoints.addAll(webSocketEndpoints);
+            saveEndpointMappings(serviceDefinition, webSocketEndpoints);
+            serviceDefinition.setWebsocketEnabled(true);
+
             // Update service status
             serviceDefinition.setStatus(ServiceDefinition.ServiceStatus.DEPLOYED);
             serviceDefinition.setDeployedAt(LocalDateTime.now());
@@ -110,8 +120,8 @@ public class ServiceDeploymentService {
             serviceRepository.save(serviceDefinition);
 
             result.success = true;
-            result.message = String.format("Successfully deployed service with %d REST endpoints and %d SOAP endpoints",
-                restEndpoints.size(), soapEndpoints.size());
+            result.message = String.format("Successfully deployed service with %d REST endpoints, %d SOAP endpoints, and %d WebSocket endpoints",
+                restEndpoints.size(), soapEndpoints.size(), webSocketEndpoints.size());
 
             log.info("Service deployment completed successfully: {}", result.message);
 
@@ -160,9 +170,15 @@ public class ServiceDeploymentService {
                 .findByServiceDefinitionAndEndpointType(service, EndpointType.SOAP);
             soapServiceGenerator.unregisterEndpoints(soapEndpoints);
 
+            // Unregister WebSocket endpoints
+            List<EndpointMapping> webSocketEndpoints = endpointRepository
+                .findByServiceDefinitionAndEndpointType(service, EndpointType.WEBSOCKET);
+            webSocketServiceGenerator.unregisterEndpoints(webSocketEndpoints);
+
             // Delete endpoint mappings
             endpointRepository.deleteAll(restEndpoints);
             endpointRepository.deleteAll(soapEndpoints);
+            endpointRepository.deleteAll(webSocketEndpoints);
 
             // Remove class loader
             classLoaderManager.removeClassLoader(schema.getServiceName());
@@ -213,6 +229,9 @@ public class ServiceDeploymentService {
                 .countByServiceDefinitionAndEndpointType(service, EndpointType.REST);
             status.soapEndpointCount = endpointRepository
                 .countByServiceDefinitionAndEndpointType(service, EndpointType.SOAP);
+            status.webSocketEndpointCount = endpointRepository
+                .countByServiceDefinitionAndEndpointType(service, EndpointType.WEBSOCKET);
+            status.webSocketEnabled = service.getWebsocketEnabled();
         }
 
         return status;
@@ -332,6 +351,7 @@ public class ServiceDeploymentService {
         public String serviceName;
         public List<EndpointMapping> restEndpoints = new ArrayList<>();
         public List<EndpointMapping> soapEndpoints = new ArrayList<>();
+        public List<EndpointMapping> webSocketEndpoints = new ArrayList<>();
         public Exception error;
     }
 
@@ -347,5 +367,7 @@ public class ServiceDeploymentService {
         public Long endpointCount;
         public Long restEndpointCount;
         public Long soapEndpointCount;
+        public Long webSocketEndpointCount;
+        public Boolean webSocketEnabled;
     }
 }

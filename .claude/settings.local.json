@@ -39,7 +39,9 @@
       "Bash(/dev/null)",
       "Bash(break)",
       "Bash(docker-compose restart:*)",
-      "Bash(do:*)"
+      "Bash(do:*)",
+      "Bash(git checkout:*)",
+      "Bash(npm install)"
     ],
     "deny": [],
     "ask": []

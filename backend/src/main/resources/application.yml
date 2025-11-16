@@ -52,6 +52,29 @@ spring:
     deserialization:
       fail-on-unknown-properties: false
 
+  # GraphQL configuration
+  graphql:
+    graphiql:
+      enabled: true
+      path: /graphiql
+    schema:
+      printer:
+        enabled: true
+    path: /graphql
+
+  # ActiveMQ configuration
+  activemq:
+    broker-url: ${ACTIVEMQ_BROKER_URL:vm://localhost?broker.persistent=false}
+    user: ${ACTIVEMQ_USER:admin}
+    password: ${ACTIVEMQ_PASSWORD:admin}
+    in-memory: true
+    pool:
+      enabled: true
+      max-connections: 50
+
+  jms:
+    pub-sub-domain: false  # Default to queue mode
+
   # Security
   security:
     user:
@@ -104,6 +127,20 @@ dynamic-service:
     base-path: /ws
     wsdl-enabled: true
     soap-version: "1.2"
+
+  graphql:
+    base-path: /graphql
+    graphiql-enabled: true
+    introspection-enabled: true
+
+  activemq:
+    queue-prefix: service
+    topic-prefix: events
+    enabled: true
+
+  sftp:
+    root-directory: ${SFTP_ROOT:/sftp}
+    enabled: true
 
   storage:
     type: in-memory  # or 'database'
