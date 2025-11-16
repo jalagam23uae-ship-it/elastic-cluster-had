@@ -66,6 +66,7 @@ public class SchemaManagementService {
             byte[] xsdContent = file.getBytes();
 
             // Create schema metadata entity
+            String packageName = "com.generated." + request.getServiceName().replace("-", "").toLowerCase() + ".model";
             SchemaMetadata metadata = SchemaMetadata.builder()
                 .serviceName(request.getServiceName())
                 .version(request.getVersion())
@@ -73,6 +74,7 @@ public class SchemaManagementService {
                 .uploadedBy(uploadedBy)
                 .status(SchemaMetadata.SchemaStatus.VALIDATING)
                 .xsdContent(new String(xsdContent))
+                .packageName(packageName)
                 .build();
 
             // Save initial metadata
@@ -96,8 +98,10 @@ public class SchemaManagementService {
             // Set namespace from validation result
             if (request.getNamespace() == null && validationResult.getTargetNamespace() != null) {
                 metadata.setNamespace(validationResult.getTargetNamespace());
+                metadata.setTargetNamespace(validationResult.getTargetNamespace());
             } else {
                 metadata.setNamespace(request.getNamespace());
+                metadata.setTargetNamespace(request.getNamespace());
             }
 
             // Store XSD file persistently (optional)
@@ -122,6 +126,9 @@ public class SchemaManagementService {
                 return buildUploadResponseFromGeneration(metadata, generationResult);
             }
 
+            // Store source output path
+            metadata.setSourceOutputPath(generationResult.getSourceOutputDirectory());
+
             // Compile generated sources
             metadata.setStatus(SchemaMetadata.SchemaStatus.COMPILING);
             metadata = schemaMetadataRepository.save(metadata);
@@ -140,6 +147,9 @@ public class SchemaManagementService {
 
                 return buildUploadResponseFromCompilation(metadata, compilationResult);
             }
+
+            // Store class output path
+            metadata.setClassOutputPath(compilationResult.getClassOutputDirectory());
 
             // Load compiled classes
             classLoaderManager.getOrCreateClassLoader(request.getServiceName(),

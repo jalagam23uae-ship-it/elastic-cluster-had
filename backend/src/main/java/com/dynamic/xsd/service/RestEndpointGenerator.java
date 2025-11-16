@@ -290,13 +290,13 @@ public class RestEndpointGenerator {
     }
 
     private EndpointMapping createEndpointMapping(String path, HttpMethod method, EndpointType type, String description) {
-        EndpointMapping mapping = new EndpointMapping();
-        mapping.setPath(path);
-        mapping.setHttpMethod(method);
-        mapping.setEndpointType(type);
-        mapping.setDescription(description);
-        mapping.setCreatedAt(LocalDateTime.now());
-        return mapping;
+        return EndpointMapping.builder()
+            .path(path)
+            .httpMethod(method)
+            .endpointType(type)
+            .description(description)
+            .active(true)
+            .build();
     }
 
     /**

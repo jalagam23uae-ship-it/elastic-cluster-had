@@ -35,7 +35,7 @@ public class WsdlGenerator {
      * Generates a WSDL document for a service.
      */
     public String generateWsdl(String serviceName, String targetNamespace,
-                               Set<Class<?>> rootClasses, byte[] xsdContent) {
+                               Set<Class<?>> rootClasses, String xsdContent) {
         try {
             log.info("Generating WSDL for service: {}", serviceName);
 
@@ -49,7 +49,7 @@ public class WsdlGenerator {
             doc.appendChild(definitions);
 
             // Add types section with embedded XSD
-            Element types = createTypes(doc, xsdContent, targetNamespace);
+            Element types = createTypes(doc, xsdContent.getBytes(), targetNamespace);
             definitions.appendChild(types);
 
             // Generate messages, portType, binding, and service for each root class

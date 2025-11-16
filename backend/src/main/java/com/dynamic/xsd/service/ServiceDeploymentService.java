@@ -4,7 +4,6 @@ import com.dynamic.xsd.domain.entity.EndpointMapping;
 import com.dynamic.xsd.domain.entity.SchemaMetadata;
 import com.dynamic.xsd.domain.entity.ServiceDefinition;
 import com.dynamic.xsd.domain.enums.EndpointType;
-import com.dynamic.xsd.domain.enums.ServiceStatus;
 import com.dynamic.xsd.repository.EndpointMappingRepository;
 import com.dynamic.xsd.repository.SchemaMetadataRepository;
 import com.dynamic.xsd.repository.ServiceDefinitionRepository;
@@ -47,7 +46,7 @@ public class ServiceDeploymentService {
         SchemaMetadata schema = schemaRepository.findById(schemaId)
             .orElseThrow(() -> new IllegalArgumentException("Schema not found: " + schemaId));
 
-        if (schema.getStatus() != ServiceStatus.ACTIVE) {
+        if (schema.getStatus() != SchemaMetadata.SchemaStatus.ACTIVE) {
             throw new IllegalStateException("Schema must be ACTIVE to deploy. Current status: " + schema.getStatus());
         }
 
@@ -103,7 +102,7 @@ public class ServiceDeploymentService {
             saveEndpointMappings(serviceDefinition, soapEndpoints);
 
             // Update service status
-            serviceDefinition.setStatus(ServiceStatus.ACTIVE);
+            serviceDefinition.setStatus(ServiceDefinition.ServiceStatus.DEPLOYED);
             serviceDefinition.setDeployedAt(LocalDateTime.now());
             serviceDefinition.setLastHealthCheck(LocalDateTime.now());
             serviceRepository.save(serviceDefinition);
@@ -122,7 +121,7 @@ public class ServiceDeploymentService {
 
             // Update service status to FAILED if exists
             serviceRepository.findFirstBySchemaId(schemaId).ifPresent(service -> {
-                service.setStatus(ServiceStatus.FAILED);
+                service.setStatus(ServiceDefinition.ServiceStatus.DEPLOYMENT_FAILED);
                 serviceRepository.save(service);
             });
         }
@@ -167,7 +166,7 @@ public class ServiceDeploymentService {
             classLoaderManager.removeClassLoader(schema.getServiceName());
 
             // Update service status
-            service.setStatus(ServiceStatus.INACTIVE);
+            service.setStatus(ServiceDefinition.ServiceStatus.UNDEPLOYED);
             service.setUndeployedAt(LocalDateTime.now());
             serviceRepository.save(service);
 
@@ -274,17 +273,17 @@ public class ServiceDeploymentService {
      * Creates or updates service definition entity.
      */
     private ServiceDefinition createOrUpdateServiceDefinition(SchemaMetadata schema) {
-        return serviceRepository.findBySchemaMetadata_Id(schema.getId())
+        return serviceRepository.findFirstBySchemaId(schema.getId())
             .map(existing -> {
-                existing.setStatus(ServiceStatus.DEPLOYING);
+                existing.setStatus(ServiceDefinition.ServiceStatus.DEPLOYING);
                 return existing;
             })
             .orElseGet(() -> {
                 ServiceDefinition newService = new ServiceDefinition();
-                newService.setSchemaMetadata(schema);
+                newService.setSchemaId(schema.getId());
                 newService.setServiceName(schema.getServiceName());
-                newService.setServiceVersion(schema.getVersion());
-                newService.setStatus(ServiceStatus.DEPLOYING);
+                newService.setVersion(schema.getVersion());
+                newService.setStatus(ServiceDefinition.ServiceStatus.DEPLOYING);
                 return newService;
             });
     }
@@ -318,8 +317,8 @@ public class ServiceDeploymentService {
     public static class DeploymentStatus {
         public String schemaId;
         public String serviceName;
-        public ServiceStatus schemaStatus;
-        public ServiceStatus serviceStatus;
+        public SchemaMetadata.SchemaStatus schemaStatus;
+        public ServiceDefinition.ServiceStatus serviceStatus;
         public LocalDateTime deployedAt;
         public Long endpointCount;
         public Long restEndpointCount;

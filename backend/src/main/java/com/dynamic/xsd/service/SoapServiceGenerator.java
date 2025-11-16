@@ -290,13 +290,14 @@ public class SoapServiceGenerator {
     }
 
     private EndpointMapping createEndpointMapping(String path, String operation, String description) {
-        EndpointMapping mapping = new EndpointMapping();
-        mapping.setPath(path);
-        mapping.setHttpMethod(HttpMethod.POST); // SOAP always uses POST
-        mapping.setEndpointType(EndpointType.SOAP);
-        mapping.setDescription("SOAP operation: " + operation + " for " + description);
-        mapping.setCreatedAt(LocalDateTime.now());
-        return mapping;
+        return EndpointMapping.builder()
+            .path(path)
+            .httpMethod(HttpMethod.POST) // SOAP always uses POST
+            .endpointType(EndpointType.SOAP)
+            .operationName(operation)
+            .description("SOAP operation: " + operation + " for " + description)
+            .active(true)
+            .build();
     }
 
     /**
