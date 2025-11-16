@@ -77,3 +77,19 @@ coverage/
 # JVM crash logs
 hs_err_pid*
 replay_pid*
+
+# Docker
+*.env
+!.env.example
+docker-compose.override.yml
+.dockerignore.local
+
+# Database backups
+backups/
+*.sql
+*.dump
+
+# SSL certificates
+nginx/ssl/*.pem
+nginx/ssl/*.key
+nginx/ssl/*.crt
