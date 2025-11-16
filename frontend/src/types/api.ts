@@ -22,3 +22,10 @@ export interface ApiError extends Error {
   response?: ErrorResponse;
   status?: number;
 }
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+  timestamp: string;
+}

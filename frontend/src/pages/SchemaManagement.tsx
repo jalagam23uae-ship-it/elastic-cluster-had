@@ -4,11 +4,13 @@
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Upload, Search, Filter, RefreshCw, Trash2, Eye } from 'lucide-react';
+import { Upload, Search, RefreshCw, Trash2, Eye, FileCode } from 'lucide-react';
+import toast from 'react-hot-toast';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import StatusBadge from '../components/common/StatusBadge';
+import FileUpload from '../components/common/FileUpload';
 import schemaService from '../api/schemaService';
 import type { SchemaMetadata, SchemaListParams } from '../types/schema';
 import { formatDistanceToNow } from 'date-fns';
@@ -24,6 +26,7 @@ const SchemaManagement: React.FC = () => {
   const [serviceName, setServiceName] = useState('');
   const [version, setVersion] = useState('1.0');
   const [description, setDescription] = useState('');
+  const [autoDeploy, setAutoDeploy] = useState(false);
 
   // List parameters
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,26 +48,33 @@ const SchemaManagement: React.FC = () => {
   // Upload mutation
   const uploadMutation = useMutation({
     mutationFn: schemaService.upload,
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['schemas'] });
       setUploadModalOpen(false);
       resetUploadForm();
-      alert('Schema uploaded successfully!');
+
+      if (data.validationErrors && data.validationErrors.length > 0) {
+        toast.error(`Upload completed with errors: ${data.validationErrors.join(', ')}`);
+      } else {
+        toast.success(`Schema "${data.serviceName}" uploaded successfully!`);
+      }
     },
     onError: (error: any) => {
-      alert(`Upload failed: ${error.response?.data?.message || error.message}`);
+      const errorMessage = error.response?.data?.message || error.message || 'Upload failed';
+      toast.error(`Upload failed: ${errorMessage}`);
     },
   });
 
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: schemaService.delete,
-    onSuccess: () => {
+    onSuccess: (_, serviceName) => {
       queryClient.invalidateQueries({ queryKey: ['schemas'] });
-      alert('Schema deleted successfully!');
+      toast.success(`Schema "${serviceName}" deleted successfully!`);
     },
-    onError: (error: any) => {
-      alert(`Delete failed: ${error.response?.data?.message || error.message}`);
+    onError: (error: any, serviceName) => {
+      const errorMessage = error.response?.data?.message || error.message || 'Delete failed';
+      toast.error(`Failed to delete "${serviceName}": ${errorMessage}`);
     },
   });
 
@@ -73,12 +83,21 @@ const SchemaManagement: React.FC = () => {
     setServiceName('');
     setVersion('1.0');
     setDescription('');
+    setAutoDeploy(false);
   };
 
   const handleUpload = (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!file || !serviceName) {
-      alert('Please select a file and enter a service name');
+      toast.error('Please select a file and enter a service name');
+      return;
+    }
+
+    // Validate service name format
+    const serviceNameRegex = /^[a-z0-9-]+$/;
+    if (!serviceNameRegex.test(serviceName)) {
+      toast.error('Service name must contain only lowercase letters, numbers, and hyphens');
       return;
     }
 
@@ -87,6 +106,7 @@ const SchemaManagement: React.FC = () => {
       serviceName,
       version,
       description,
+      autoDeploy,
     });
   };
 
@@ -108,7 +128,7 @@ const SchemaManagement: React.FC = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Schema Management</h1>
           <p className="mt-2 text-gray-600">
-            Upload and manage XSD schemas
+            Upload and manage XSD schemas for service generation
           </p>
         </div>
         <Button
@@ -140,7 +160,10 @@ const SchemaManagement: React.FC = () => {
             <option value="">All Statuses</option>
             <option value="ACTIVE">Active</option>
             <option value="FAILED">Failed</option>
-            <option value="UPLOADING">Uploading</option>
+            <option value="UPLOADED">Uploaded</option>
+            <option value="VALIDATING">Validating</option>
+            <option value="GENERATING">Generating</option>
+            <option value="COMPILING">Compiling</option>
           </select>
           <Button
             variant="outline"
@@ -214,12 +237,15 @@ const SchemaManagement: React.FC = () => {
                         <button
                           onClick={() => handleViewDetails(schema)}
                           className="text-primary-600 hover:text-primary-900"
+                          title="View details"
                         >
                           <Eye size={18} />
                         </button>
                         <button
                           onClick={() => handleDelete(schema.serviceName)}
                           className="text-red-600 hover:text-red-900"
+                          title="Delete schema"
+                          disabled={deleteMutation.isPending}
                         >
                           <Trash2 size={18} />
                         </button>
@@ -232,7 +258,7 @@ const SchemaManagement: React.FC = () => {
 
             {/* Pagination */}
             {schemasData.totalPages > 1 && (
-              <div className="mt-4 flex items-center justify-between">
+              <div className="mt-4 flex items-center justify-between px-6 py-3 bg-gray-50">
                 <div className="text-sm text-gray-700">
                   Showing {schemasData.numberOfElements} of {schemasData.totalElements} schemas
                 </div>
@@ -245,6 +271,9 @@ const SchemaManagement: React.FC = () => {
                   >
                     Previous
                   </Button>
+                  <div className="flex items-center px-3 text-sm text-gray-700">
+                    Page {schemasData.number + 1} of {schemasData.totalPages}
+                  </div>
                   <Button
                     variant="outline"
                     size="sm"
@@ -260,9 +289,11 @@ const SchemaManagement: React.FC = () => {
         ) : (
           <div className="text-center py-12">
             <FileCode size={48} className="mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-600">No schemas found</p>
+            <p className="text-gray-600 mb-2">No schemas found</p>
+            <p className="text-sm text-gray-500 mb-4">
+              Get started by uploading your first XSD schema
+            </p>
             <Button
-              className="mt-4"
               onClick={() => setUploadModalOpen(true)}
               leftIcon={<Upload size={20} />}
             >
@@ -275,11 +306,20 @@ const SchemaManagement: React.FC = () => {
       {/* Upload Modal */}
       <Modal
         isOpen={uploadModalOpen}
-        onClose={() => setUploadModalOpen(false)}
+        onClose={() => {
+          setUploadModalOpen(false);
+          resetUploadForm();
+        }}
         title="Upload XSD Schema"
         footer={
           <>
-            <Button variant="outline" onClick={() => setUploadModalOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setUploadModalOpen(false);
+                resetUploadForm();
+              }}
+            >
               Cancel
             </Button>
             <Button
@@ -293,39 +333,18 @@ const SchemaManagement: React.FC = () => {
         }
       >
         <form onSubmit={handleUpload} className="space-y-4">
-          {/* File Upload */}
+          {/* File Upload with Drag & Drop */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               XSD File *
             </label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary-500 transition-colors">
-              <input
-                type="file"
-                accept=".xsd"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
-                className="hidden"
-                id="file-upload"
-              />
-              <label htmlFor="file-upload" className="cursor-pointer">
-                {file ? (
-                  <div>
-                    <FileCode className="mx-auto text-primary-600 mb-2" size={48} />
-                    <p className="text-sm font-medium text-gray-900">{file.name}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {(file.size / 1024).toFixed(2)} KB
-                    </p>
-                  </div>
-                ) : (
-                  <div>
-                    <Upload className="mx-auto text-gray-400 mb-2" size={48} />
-                    <p className="text-sm text-gray-600">
-                      Click to upload or drag and drop
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">XSD files only (max 5MB)</p>
-                  </div>
-                )}
-              </label>
-            </div>
+            <FileUpload
+              file={file}
+              onFileSelect={setFile}
+              accept={{ 'text/xml': ['.xsd'] }}
+              maxSize={5 * 1024 * 1024}
+              disabled={uploadMutation.isPending}
+            />
           </div>
 
           {/* Service Name */}
@@ -336,10 +355,11 @@ const SchemaManagement: React.FC = () => {
             <input
               type="text"
               value={serviceName}
-              onChange={(e) => setServiceName(e.target.value)}
+              onChange={(e) => setServiceName(e.target.value.toLowerCase())}
               placeholder="e.g., customer-service"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               required
+              disabled={uploadMutation.isPending}
             />
             <p className="mt-1 text-xs text-gray-500">
               Lowercase letters, numbers, and hyphens only
@@ -357,6 +377,7 @@ const SchemaManagement: React.FC = () => {
               onChange={(e) => setVersion(e.target.value)}
               placeholder="1.0"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              disabled={uploadMutation.isPending}
             />
           </div>
 
@@ -371,7 +392,23 @@ const SchemaManagement: React.FC = () => {
               placeholder="Brief description of the service..."
               rows={3}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              disabled={uploadMutation.isPending}
             />
+          </div>
+
+          {/* Auto Deploy */}
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="autoDeploy"
+              checked={autoDeploy}
+              onChange={(e) => setAutoDeploy(e.target.checked)}
+              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+              disabled={uploadMutation.isPending}
+            />
+            <label htmlFor="autoDeploy" className="ml-2 block text-sm text-gray-700">
+              Automatically deploy service after successful compilation
+            </label>
           </div>
         </form>
       </Modal>
@@ -426,7 +463,9 @@ const SchemaManagement: React.FC = () => {
 
             {selectedSchema.generatedArtifacts.pojos.length > 0 && (
               <div>
-                <p className="text-sm font-medium text-gray-500 mb-2">Generated POJOs</p>
+                <p className="text-sm font-medium text-gray-500 mb-2">
+                  Generated POJOs ({selectedSchema.generatedArtifacts.pojos.length})
+                </p>
                 <ul className="text-sm text-gray-900 space-y-1 bg-gray-50 px-3 py-2 rounded max-h-40 overflow-y-auto">
                   {selectedSchema.generatedArtifacts.pojos.map((pojo, index) => (
                     <li key={index} className="font-mono text-xs">
@@ -437,10 +476,19 @@ const SchemaManagement: React.FC = () => {
               </div>
             )}
 
+            {selectedSchema.validationErrors && (
+              <div>
+                <p className="text-sm font-medium text-red-600">Validation Errors</p>
+                <pre className="mt-1 text-xs text-red-900 bg-red-50 px-3 py-2 rounded overflow-x-auto whitespace-pre-wrap">
+                  {selectedSchema.validationErrors}
+                </pre>
+              </div>
+            )}
+
             {selectedSchema.compilationErrors && (
               <div>
                 <p className="text-sm font-medium text-red-600">Compilation Errors</p>
-                <pre className="mt-1 text-xs text-red-900 bg-red-50 px-3 py-2 rounded overflow-x-auto">
+                <pre className="mt-1 text-xs text-red-900 bg-red-50 px-3 py-2 rounded overflow-x-auto whitespace-pre-wrap">
                   {selectedSchema.compilationErrors}
                 </pre>
               </div>
