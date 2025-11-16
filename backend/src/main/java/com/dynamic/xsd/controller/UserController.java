@@ -53,7 +53,7 @@ public class UserController {
 
     @GetMapping("/{userId}")
     @Operation(summary = "Get User", description = "Get user by ID")
-    public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable Long userId) {
+    public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable String userId) {
         log.debug("Get user request for ID: {}", userId);
 
         try {
@@ -138,7 +138,7 @@ public class UserController {
     @PutMapping("/{userId}")
     @Operation(summary = "Update User", description = "Update user details")
     public ResponseEntity<ApiResponse<UserResponse>> updateUser(
-            @PathVariable Long userId,
+            @PathVariable String userId,
             @Valid @RequestBody UserUpdateRequest request) {
         log.info("Update user request for ID: {}", userId);
 
@@ -158,7 +158,7 @@ public class UserController {
 
     @DeleteMapping("/{userId}")
     @Operation(summary = "Delete User", description = "Delete user permanently")
-    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long userId) {
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable String userId) {
         log.info("Delete user request for ID: {}", userId);
 
         try {
@@ -176,7 +176,7 @@ public class UserController {
 
     @PostMapping("/{userId}/deactivate")
     @Operation(summary = "Deactivate User", description = "Deactivate user (soft delete)")
-    public ResponseEntity<ApiResponse<UserResponse>> deactivateUser(@PathVariable Long userId) {
+    public ResponseEntity<ApiResponse<UserResponse>> deactivateUser(@PathVariable String userId) {
         log.info("Deactivate user request for ID: {}", userId);
 
         try {
@@ -194,7 +194,7 @@ public class UserController {
 
     @PostMapping("/{userId}/activate")
     @Operation(summary = "Activate User", description = "Activate a deactivated user")
-    public ResponseEntity<ApiResponse<UserResponse>> activateUser(@PathVariable Long userId) {
+    public ResponseEntity<ApiResponse<UserResponse>> activateUser(@PathVariable String userId) {
         log.info("Activate user request for ID: {}", userId);
 
         try {

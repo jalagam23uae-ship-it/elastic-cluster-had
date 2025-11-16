@@ -52,7 +52,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(request.getRole() != null ? request.getRole() : UserRole.USER);
         user.setActive(true);
-        user.setCreatedAt(LocalDateTime.now());
+        // createdAt is automatically set by @CreationTimestamp
 
         User savedUser = userRepository.save(user);
         log.info("User created successfully: {}", savedUser.getUsername());
@@ -64,7 +64,7 @@ public class UserService {
      * Updates an existing user.
      */
     @Transactional
-    public UserResponse updateUser(Long userId, UserUpdateRequest request) {
+    public UserResponse updateUser(String userId, UserUpdateRequest request) {
         log.info("Updating user ID: {}", userId);
 
         User user = userRepository.findById(userId)
@@ -99,7 +99,7 @@ public class UserService {
     /**
      * Gets a user by ID.
      */
-    public UserResponse getUserById(Long userId) {
+    public UserResponse getUserById(String userId) {
         log.debug("Getting user by ID: {}", userId);
 
         User user = userRepository.findById(userId)
@@ -156,7 +156,7 @@ public class UserService {
      * Deletes a user.
      */
     @Transactional
-    public void deleteUser(Long userId) {
+    public void deleteUser(String userId) {
         log.info("Deleting user ID: {}", userId);
 
         User user = userRepository.findById(userId)
@@ -170,7 +170,7 @@ public class UserService {
      * Deactivates a user (soft delete).
      */
     @Transactional
-    public UserResponse deactivateUser(Long userId) {
+    public UserResponse deactivateUser(String userId) {
         log.info("Deactivating user ID: {}", userId);
 
         User user = userRepository.findById(userId)
@@ -187,7 +187,7 @@ public class UserService {
      * Activates a user.
      */
     @Transactional
-    public UserResponse activateUser(Long userId) {
+    public UserResponse activateUser(String userId) {
         log.info("Activating user ID: {}", userId);
 
         User user = userRepository.findById(userId)
@@ -204,7 +204,7 @@ public class UserService {
      * Changes user password.
      */
     @Transactional
-    public void changePassword(Long userId, String currentPassword, String newPassword) {
+    public void changePassword(String userId, String currentPassword, String newPassword) {
         log.info("Changing password for user ID: {}", userId);
 
         User user = userRepository.findById(userId)
