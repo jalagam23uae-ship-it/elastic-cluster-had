@@ -1,0 +1,143 @@
+spring:
+  application:
+    name: dynamic-xsd-service-platform
+
+  # Database configuration
+  datasource:
+    url: jdbc:h2:mem:xsdplatform
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  # Servlet configuration
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  # Jackson configuration for JSON/XML
+  jackson:
+    serialization:
+      indent-output: true
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+
+  # Security
+  security:
+    user:
+      name: admin
+      password: admin123
+
+# Server configuration
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: on_param
+
+# Application-specific configuration
+dynamic-service:
+  xsd:
+    storage-path: ${XSD_STORAGE_PATH:./xsd-storage}
+    max-file-size: 5242880  # 5MB in bytes
+    validation-enabled: true
+    cache-enabled: true
+
+  compilation:
+    temp-directory: ${COMPILE_TEMP:./temp/compile}
+    output-directory: ${COMPILE_OUTPUT:./temp/classes}
+    keep-sources: true
+    java-version: "21"
+    compiler-options:
+      - "-parameters"
+      - "-g"
+      - "-source"
+      - "21"
+      - "-target"
+      - "21"
+
+  classloader:
+    isolation-enabled: true
+    parent-first: false
+    max-services: 100
+
+  rest:
+    base-path: /api/dynamic
+    versioning-enabled: true
+    default-page-size: 20
+    max-page-size: 100
+
+  soap:
+    base-path: /ws
+    wsdl-enabled: true
+    soap-version: "1.2"
+
+  storage:
+    type: in-memory  # or 'database'
+
+  security:
+    jwt:
+      secret: ${JWT_SECRET:mySecretKeyForJWTTokenGenerationThatIsLongEnough1234567890}
+      expiration: 86400000  # 24 hours in milliseconds
+      refresh-expiration: 604800000  # 7 days in milliseconds
+    enabled: true
+    rate-limit: 100  # requests per minute
+
+  monitoring:
+    metrics-enabled: true
+    audit-enabled: true
+
+# Management endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Logging configuration
+logging:
+  level:
+    root: INFO
+    com.dynamic: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/application.log
+
+# Springdoc OpenAPI configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+  show-actuator: true

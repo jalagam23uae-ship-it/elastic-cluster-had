@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://example.com/product"
+           xmlns:tns="http://example.com/product"
+           elementFormDefault="qualified">
+
+    <!-- Product root element -->
+    <xs:element name="Product" type="tns:ProductType"/>
+
+    <!-- Product complex type -->
+    <xs:complexType name="ProductType">
+        <xs:sequence>
+            <xs:element name="productId" type="xs:long"/>
+            <xs:element name="name" type="xs:string"/>
+            <xs:element name="description" type="xs:string"/>
+            <xs:element name="price" type="xs:decimal"/>
+            <xs:element name="category" type="tns:CategoryType"/>
+            <xs:element name="sku" type="xs:string"/>
+            <xs:element name="stockQuantity" type="xs:int"/>
+            <xs:element name="weight" type="xs:double" minOccurs="0"/>
+            <xs:element name="dimensions" type="tns:DimensionsType" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Category simple type (enum) -->
+    <xs:simpleType name="CategoryType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="ELECTRONICS"/>
+            <xs:enumeration value="CLOTHING"/>
+            <xs:enumeration value="FOOD"/>
+            <xs:enumeration value="BOOKS"/>
+            <xs:enumeration value="OTHER"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Dimensions complex type -->
+    <xs:complexType name="DimensionsType">
+        <xs:sequence>
+            <xs:element name="length" type="xs:double"/>
+            <xs:element name="width" type="xs:double"/>
+            <xs:element name="height" type="xs:double"/>
+            <xs:element name="unit" type="xs:string" default="cm"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Product list -->
+    <xs:element name="ProductList">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="product" type="tns:ProductType" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>

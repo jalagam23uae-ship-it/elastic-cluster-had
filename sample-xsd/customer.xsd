@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://example.com/customer"
+           xmlns:tns="http://example.com/customer"
+           elementFormDefault="qualified">
+
+    <!-- Customer root element -->
+    <xs:element name="Customer" type="tns:CustomerType"/>
+
+    <!-- Customer complex type -->
+    <xs:complexType name="CustomerType">
+        <xs:sequence>
+            <xs:element name="customerId" type="xs:long"/>
+            <xs:element name="firstName" type="xs:string"/>
+            <xs:element name="lastName" type="xs:string"/>
+            <xs:element name="email" type="xs:string"/>
+            <xs:element name="phoneNumber" type="xs:string" minOccurs="0"/>
+            <xs:element name="address" type="tns:AddressType"/>
+            <xs:element name="dateOfBirth" type="xs:date" minOccurs="0"/>
+            <xs:element name="active" type="xs:boolean" default="true"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Address complex type -->
+    <xs:complexType name="AddressType">
+        <xs:sequence>
+            <xs:element name="street" type="xs:string"/>
+            <xs:element name="city" type="xs:string"/>
+            <xs:element name="state" type="xs:string"/>
+            <xs:element name="zipCode" type="xs:string"/>
+            <xs:element name="country" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Customer list for collections -->
+    <xs:element name="CustomerList">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="customer" type="tns:CustomerType" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>

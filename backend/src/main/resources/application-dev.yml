@@ -1,0 +1,9 @@
+spring:
+  h2:
+    console:
+      enabled: true
+
+logging:
+  level:
+    com.dynamic: DEBUG
+    org.springframework: DEBUG
