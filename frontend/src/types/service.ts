@@ -30,6 +30,11 @@ export interface ServiceCatalogEntry {
   totalEndpoints: number;
   restEndpoints: number;
   soapEndpoints: number;
+  webSocketEndpoints?: number;
+  grpcEndpoints?: number;
+  graphQLEndpoints?: number;
+  activeMQEndpoints?: number;
+  sftpEndpoints?: number;
   totalRequests: number;
   averageResponseTime: number;
 }
@@ -43,7 +48,7 @@ export interface ServiceDetails {
 
 export interface EndpointMapping {
   id: string;
-  endpointType: 'REST' | 'SOAP';
+  endpointType: 'REST' | 'SOAP' | 'WebSocket' | 'gRPC' | 'GraphQL' | 'ActiveMQ' | 'SFTP';
   path: string;
   httpMethod: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | null;
   operationName: string;
@@ -55,6 +60,11 @@ export interface DeployRequest {
   schemaId: string;
   enableRest?: boolean;
   enableSoap?: boolean;
+  enableWebSocket?: boolean;
+  enableGrpc?: boolean;
+  enableGraphQL?: boolean;
+  enableActiveMQ?: boolean;
+  enableSftp?: boolean;
   customPath?: string;
 }
 

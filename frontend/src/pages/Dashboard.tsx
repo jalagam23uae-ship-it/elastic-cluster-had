@@ -53,6 +53,11 @@ const Dashboard: React.FC = () => {
 
     const restEndpoints = endpoints.filter((e) => e.endpointType === 'REST').length;
     const soapEndpoints = endpoints.filter((e) => e.endpointType === 'SOAP').length;
+    const webSocketEndpoints = endpoints.filter((e) => e.endpointType === 'WebSocket').length;
+    const grpcEndpoints = endpoints.filter((e) => e.endpointType === 'gRPC').length;
+    const graphQLEndpoints = endpoints.filter((e) => e.endpointType === 'GraphQL').length;
+    const activeMQEndpoints = endpoints.filter((e) => e.endpointType === 'ActiveMQ').length;
+    const sftpEndpoints = endpoints.filter((e) => e.endpointType === 'SFTP').length;
 
     return {
       totalServices,
@@ -63,6 +68,11 @@ const Dashboard: React.FC = () => {
       avgResponseTime,
       restEndpoints,
       soapEndpoints,
+      webSocketEndpoints,
+      grpcEndpoints,
+      graphQLEndpoints,
+      activeMQEndpoints,
+      sftpEndpoints,
     };
   }, [services, schemas, endpoints]);
 
@@ -102,14 +112,48 @@ const Dashboard: React.FC = () => {
           {/* Services */}
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
             <div className="flex items-center justify-between">
-              <div>
+              <div className="flex-1">
                 <p className="text-sm font-medium text-blue-600">Services</p>
                 <p className="text-3xl font-bold text-blue-900 mt-1">{stats.totalServices}</p>
-                <p className="text-xs text-blue-600 mt-1">
-                  {stats.restEndpoints} REST, {stats.soapEndpoints} SOAP
-                </p>
+                <div className="mt-2 flex flex-wrap gap-1 text-[10px]">
+                  {stats.restEndpoints > 0 && (
+                    <span className="px-1.5 py-0.5 bg-blue-200 text-blue-800 rounded">
+                      {stats.restEndpoints} REST
+                    </span>
+                  )}
+                  {stats.soapEndpoints > 0 && (
+                    <span className="px-1.5 py-0.5 bg-purple-200 text-purple-800 rounded">
+                      {stats.soapEndpoints} SOAP
+                    </span>
+                  )}
+                  {stats.webSocketEndpoints > 0 && (
+                    <span className="px-1.5 py-0.5 bg-green-200 text-green-800 rounded">
+                      {stats.webSocketEndpoints} WS
+                    </span>
+                  )}
+                  {stats.grpcEndpoints > 0 && (
+                    <span className="px-1.5 py-0.5 bg-indigo-200 text-indigo-800 rounded">
+                      {stats.grpcEndpoints} gRPC
+                    </span>
+                  )}
+                  {stats.graphQLEndpoints > 0 && (
+                    <span className="px-1.5 py-0.5 bg-pink-200 text-pink-800 rounded">
+                      {stats.graphQLEndpoints} GraphQL
+                    </span>
+                  )}
+                  {stats.activeMQEndpoints > 0 && (
+                    <span className="px-1.5 py-0.5 bg-orange-200 text-orange-800 rounded">
+                      {stats.activeMQEndpoints} MQ
+                    </span>
+                  )}
+                  {stats.sftpEndpoints > 0 && (
+                    <span className="px-1.5 py-0.5 bg-teal-200 text-teal-800 rounded">
+                      {stats.sftpEndpoints} SFTP
+                    </span>
+                  )}
+                </div>
               </div>
-              <Server className="text-blue-600" size={40} />
+              <Server className="text-blue-600 flex-shrink-0" size={40} />
             </div>
           </Card>
 
@@ -250,6 +294,61 @@ const Dashboard: React.FC = () => {
           </div>
         </Card>
       </div>
+
+      {/* Protocol Breakdown */}
+      <Card>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Protocol Distribution</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+          {/* REST */}
+          <div className="text-center p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="text-3xl font-bold text-blue-700">{stats.restEndpoints}</div>
+            <div className="text-xs text-blue-600 mt-1 font-medium">REST</div>
+            <div className="text-[10px] text-blue-500 mt-0.5">HTTP/JSON</div>
+          </div>
+
+          {/* SOAP */}
+          <div className="text-center p-4 bg-purple-50 border border-purple-200 rounded-lg">
+            <div className="text-3xl font-bold text-purple-700">{stats.soapEndpoints}</div>
+            <div className="text-xs text-purple-600 mt-1 font-medium">SOAP</div>
+            <div className="text-[10px] text-purple-500 mt-0.5">XML Service</div>
+          </div>
+
+          {/* WebSocket */}
+          <div className="text-center p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="text-3xl font-bold text-green-700">{stats.webSocketEndpoints}</div>
+            <div className="text-xs text-green-600 mt-1 font-medium">WebSocket</div>
+            <div className="text-[10px] text-green-500 mt-0.5">Real-time</div>
+          </div>
+
+          {/* gRPC */}
+          <div className="text-center p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+            <div className="text-3xl font-bold text-indigo-700">{stats.grpcEndpoints}</div>
+            <div className="text-xs text-indigo-600 mt-1 font-medium">gRPC</div>
+            <div className="text-[10px] text-indigo-500 mt-0.5">High-perf</div>
+          </div>
+
+          {/* GraphQL */}
+          <div className="text-center p-4 bg-pink-50 border border-pink-200 rounded-lg">
+            <div className="text-3xl font-bold text-pink-700">{stats.graphQLEndpoints}</div>
+            <div className="text-xs text-pink-600 mt-1 font-medium">GraphQL</div>
+            <div className="text-[10px] text-pink-500 mt-0.5">Flexible</div>
+          </div>
+
+          {/* ActiveMQ */}
+          <div className="text-center p-4 bg-orange-50 border border-orange-200 rounded-lg">
+            <div className="text-3xl font-bold text-orange-700">{stats.activeMQEndpoints}</div>
+            <div className="text-xs text-orange-600 mt-1 font-medium">ActiveMQ</div>
+            <div className="text-[10px] text-orange-500 mt-0.5">Message Queue</div>
+          </div>
+
+          {/* SFTP */}
+          <div className="text-center p-4 bg-teal-50 border border-teal-200 rounded-lg">
+            <div className="text-3xl font-bold text-teal-700">{stats.sftpEndpoints}</div>
+            <div className="text-xs text-teal-600 mt-1 font-medium">SFTP</div>
+            <div className="text-[10px] text-teal-500 mt-0.5">File Transfer</div>
+          </div>
+        </div>
+      </Card>
 
       {/* Quick Stats */}
       <Card>

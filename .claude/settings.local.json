@@ -41,7 +41,9 @@
       "Bash(docker-compose restart:*)",
       "Bash(do:*)",
       "Bash(git checkout:*)",
-      "Bash(npm install)"
+      "Bash(npm install)",
+      "Bash(npm run build:*)",
+      "Bash(docker-compose ps:*)"
     ],
     "deny": [],
     "ask": []

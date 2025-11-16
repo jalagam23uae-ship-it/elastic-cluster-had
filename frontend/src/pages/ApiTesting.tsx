@@ -1,12 +1,16 @@
 /**
  * API Testing Page
- * Allows users to test deployed service endpoints
+ * Comprehensive testing interface for all 7 protocols
+ * REST, SOAP, WebSocket, gRPC, GraphQL, ActiveMQ, SFTP
  */
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { GraphQLTester } from '../components/protocols/GraphQLTester';
+import { ActiveMQTester } from '../components/protocols/ActiveMQTester';
+import { SFTPTester } from '../components/protocols/SFTPTester';
 
 const API_BASE_URL = 'http://localhost:8080/api/v1';
 
@@ -21,7 +25,11 @@ interface Endpoint {
   serviceId: string;
 }
 
+type ProtocolTab = 'REST/SOAP' | 'WebSocket' | 'gRPC' | 'GraphQL' | 'ActiveMQ' | 'SFTP';
+
 const ApiTesting: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<ProtocolTab>('REST/SOAP');
+  const [selectedService, setSelectedService] = useState<string>('');
   const [selectedEndpoint, setSelectedEndpoint] = useState<Endpoint | null>(null);
   const [requestBody, setRequestBody] = useState('{\n  \n}');
   const [response, setResponse] = useState<any>(null);
@@ -102,19 +110,165 @@ const ApiTesting: React.FC = () => {
     }
   };
 
+  // Get unique service names from endpoints
+  const serviceNames = React.useMemo(() => {
+    const names = new Set(endpoints.map((e) => e.serviceName));
+    return Array.from(names);
+  }, [endpoints]);
+
+  // Set first service as default
+  React.useEffect(() => {
+    if (serviceNames.length > 0 && !selectedService) {
+      setSelectedService(serviceNames[0]);
+    }
+  }, [serviceNames, selectedService]);
+
+  const tabs: { id: ProtocolTab; label: string; description: string }[] = [
+    { id: 'REST/SOAP', label: 'REST & SOAP', description: 'HTTP/XML Web Services' },
+    { id: 'WebSocket', label: 'WebSocket', description: 'Real-time bidirectional' },
+    { id: 'gRPC', label: 'gRPC', description: 'High-performance RPC' },
+    { id: 'GraphQL', label: 'GraphQL', description: 'Flexible query language' },
+    { id: 'ActiveMQ', label: 'ActiveMQ', description: 'Message queue (JMS)' },
+    { id: 'SFTP', label: 'SFTP', description: 'File-based integration' },
+  ];
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">API Testing</h1>
-        <p className="mt-2 text-gray-600">Test your deployed service endpoints</p>
+        <h1 className="text-3xl font-bold text-gray-900">Multi-Protocol Testing</h1>
+        <p className="mt-2 text-gray-600">Test services across all 7 supported protocols</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Endpoints List */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-md border border-gray-200">
-            <div className="px-4 py-3 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Available Endpoints</h2>
+      {/* Service Selection */}
+      {serviceNames.length > 0 && (
+        <div className="bg-white rounded-lg shadow p-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Select Service
+          </label>
+          <select
+            value={selectedService}
+            onChange={(e) => setSelectedService(e.target.value)}
+            className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            {serviceNames.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Protocol Tabs */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex overflow-x-auto" aria-label="Tabs">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`${
+                  activeTab === tab.id
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                } whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm flex-shrink-0`}
+              >
+                <div className="flex flex-col items-start">
+                  <span>{tab.label}</span>
+                  <span className="text-xs text-gray-400 mt-0.5">{tab.description}</span>
+                </div>
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        {/* Tab Content */}
+        <div className="p-6">
+          {activeTab === 'REST/SOAP' && (
+            <RestSoapTester
+              endpoints={endpoints}
+              isLoading={isLoading}
+              selectedEndpoint={selectedEndpoint}
+              setSelectedEndpoint={setSelectedEndpoint}
+              requestBody={requestBody}
+              setRequestBody={setRequestBody}
+              response={response}
+              setResponse={setResponse}
+              loading={loading}
+              setLoading={setLoading}
+              handleTestEndpoint={handleTestEndpoint}
+              formatJson={formatJson}
+            />
+          )}
+
+          {activeTab === 'WebSocket' && selectedService && (
+            <WebSocketTester serviceName={selectedService} />
+          )}
+
+          {activeTab === 'gRPC' && selectedService && (
+            <GrpcTester serviceName={selectedService} />
+          )}
+
+          {activeTab === 'GraphQL' && selectedService && (
+            <GraphQLTester serviceName={selectedService} />
+          )}
+
+          {activeTab === 'ActiveMQ' && selectedService && (
+            <ActiveMQTester serviceName={selectedService} />
+          )}
+
+          {activeTab === 'SFTP' && selectedService && (
+            <SFTPTester serviceName={selectedService} />
+          )}
+
+          {!selectedService && activeTab !== 'REST/SOAP' && (
+            <div className="text-center py-12 text-gray-500">
+              Please deploy a service first to test {activeTab} protocol
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// REST/SOAP Tester Component
+interface RestSoapTesterProps {
+  endpoints: Endpoint[];
+  isLoading: boolean;
+  selectedEndpoint: Endpoint | null;
+  setSelectedEndpoint: (endpoint: Endpoint | null) => void;
+  requestBody: string;
+  setRequestBody: (body: string) => void;
+  response: any;
+  setResponse: (response: any) => void;
+  loading: boolean;
+  setLoading: (loading: boolean) => void;
+  handleTestEndpoint: () => void;
+  formatJson: () => void;
+}
+
+const RestSoapTester: React.FC<RestSoapTesterProps> = ({
+  endpoints,
+  isLoading,
+  selectedEndpoint,
+  setSelectedEndpoint,
+  requestBody,
+  setRequestBody,
+  response,
+  setResponse,
+  loading,
+  setLoading,
+  handleTestEndpoint,
+  formatJson,
+}) => {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Endpoints List */}
+      <div className="lg:col-span-1">
+        <div className="bg-gray-50 rounded-lg border border-gray-200">
+          <div className="px-4 py-3 border-b border-gray-200 bg-white">
+            <h2 className="text-lg font-semibold text-gray-900">Available Endpoints</h2>
             </div>
             <div className="p-4">
               {isLoading ? (
@@ -164,14 +318,14 @@ const ApiTesting: React.FC = () => {
                   ))}
                 </div>
               )}
-            </div>
           </div>
         </div>
+      </div>
 
-        {/* Request/Response Panel */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-md border border-gray-200">
-            <div className="px-4 py-3 border-b border-gray-200">
+      {/* Request/Response Panel */}
+      <div className="lg:col-span-2">
+        <div className="bg-white rounded-lg border border-gray-200">
+          <div className="px-4 py-3 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">
                 {selectedEndpoint ? `Test: ${selectedEndpoint.operationName}` : 'Select an Endpoint'}
               </h2>
@@ -275,11 +429,11 @@ const ApiTesting: React.FC = () => {
                   Select an endpoint from the list to start testing
                 </div>
               )}
-            </div>
           </div>
+        </div>
 
-          {/* Swagger Link */}
-          <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        {/* Swagger Link */}
+        <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
               <svg
                 className="w-5 h-5 text-blue-600 mt-0.5"
@@ -307,10 +461,57 @@ const ApiTesting: React.FC = () => {
                     Swagger UI
                   </a>
                 </p>
-              </div>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+// WebSocket Tester Component (placeholder)
+const WebSocketTester: React.FC<{ serviceName: string }> = ({ serviceName }) => {
+  return (
+    <div className="bg-gray-50 rounded-lg p-6 text-center">
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">WebSocket Testing</h3>
+      <p className="text-gray-600 mb-4">
+        WebSocket testing for service: <code className="font-mono font-semibold">{serviceName}</code>
+      </p>
+      <div className="text-sm text-gray-500 space-y-2">
+        <p>WebSocket endpoint: <code className="font-mono">ws://localhost:8080/ws</code></p>
+        <p>Topic: <code className="font-mono">/topic/service.{serviceName}</code></p>
+        <p>Subscribe: <code className="font-mono">/app/service/{serviceName}</code></p>
+      </div>
+      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded">
+        <p className="text-sm text-blue-800">
+          Use a WebSocket client like Postman or your browser console to test real-time updates
+        </p>
+      </div>
+    </div>
+  );
+};
+
+// gRPC Tester Component (placeholder)
+const GrpcTester: React.FC<{ serviceName: string }> = ({ serviceName }) => {
+  return (
+    <div className="bg-gray-50 rounded-lg p-6 text-center">
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">gRPC Testing</h3>
+      <p className="text-gray-600 mb-4">
+        gRPC testing for service: <code className="font-mono font-semibold">{serviceName}</code>
+      </p>
+      <div className="text-sm text-gray-500 space-y-2">
+        <p>gRPC server: <code className="font-mono">localhost:9090</code></p>
+        <p>Proto file: <code className="font-mono">/api/v1/proto/{serviceName}</code></p>
+      </div>
+      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded">
+        <p className="text-sm text-blue-800 mb-2">
+          Download the proto file and use tools like:
+        </p>
+        <ul className="text-sm text-blue-700 space-y-1">
+          <li>• grpcurl (CLI tool)</li>
+          <li>• BloomRPC (GUI client)</li>
+          <li>• Postman (gRPC support)</li>
+        </ul>
       </div>
     </div>
   );
