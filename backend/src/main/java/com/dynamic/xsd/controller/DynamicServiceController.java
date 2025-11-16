@@ -130,7 +130,8 @@ public class DynamicServiceController {
         log.info("WSDL request for service: {}", serviceName);
 
         // Only serve WSDL if 'wsdl' parameter is present (standard SOAP convention)
-        if (wsdl == null && !"".equals(wsdl)) {
+        // Standard URL: /ws/{serviceName}?wsdl
+        if (wsdl == null) {
             return ResponseEntity.badRequest()
                 .body("<?xml version=\"1.0\"?><error>Use ?wsdl parameter to get WSDL</error>");
         }

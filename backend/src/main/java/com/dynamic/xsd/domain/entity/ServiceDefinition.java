@@ -55,8 +55,7 @@ public class ServiceDefinition {
     @Builder.Default
     private ServiceStatus status = ServiceStatus.DEPLOYING;
 
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false)
+    @Column
     private LocalDateTime deployedAt;
 
     @UpdateTimestamp
