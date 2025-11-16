@@ -36,4 +36,8 @@ public interface ServiceDefinitionRepository extends JpaRepository<ServiceDefini
 
     @Query("SELECT AVG(s.averageResponseTime) FROM ServiceDefinition s WHERE s.status = 'DEPLOYED'")
     Double getAverageResponseTime();
+
+    List<ServiceDefinition> findTop10ByOrderByDeployedAtDesc();
+
+    Optional<ServiceDefinition> findFirstBySchemaId(String schemaId);
 }

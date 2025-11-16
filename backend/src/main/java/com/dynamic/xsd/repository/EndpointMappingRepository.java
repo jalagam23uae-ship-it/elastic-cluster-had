@@ -25,4 +25,10 @@ public interface EndpointMappingRepository extends JpaRepository<EndpointMapping
 
     @Query("SELECT COUNT(e) FROM EndpointMapping e WHERE e.type = :type AND e.active = true")
     long countActiveByType(EndpointType type);
+
+    List<EndpointMapping> findByServiceDefinitionAndType(com.dynamic.xsd.domain.entity.ServiceDefinition serviceDefinition, EndpointType type);
+
+    long countByServiceDefinition(com.dynamic.xsd.domain.entity.ServiceDefinition serviceDefinition);
+
+    long countByServiceDefinitionAndType(com.dynamic.xsd.domain.entity.ServiceDefinition serviceDefinition, EndpointType type);
 }

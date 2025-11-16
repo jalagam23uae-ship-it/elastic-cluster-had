@@ -55,6 +55,9 @@ public class ServiceDefinition {
     private LocalDateTime undeployedAt;
 
     @Column
+    private LocalDateTime lastHealthCheck;
+
+    @Column
     private String deployedBy;
 
     @OneToMany(mappedBy = "serviceDefinition", cascade = CascadeType.ALL, orphanRemoval = true)
