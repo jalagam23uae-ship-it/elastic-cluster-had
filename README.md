@@ -159,14 +159,29 @@ git clone <repository-url>
 cd elastic-cluster-had
 ```
 
-### 2. Build the Backend
+### 2. Setup PostgreSQL Database
+
+**Option A: Using Docker (Recommended)**
+
+```bash
+# Run the automated setup script
+./setup-database.sh
+```
+
+This will start PostgreSQL and pgAdmin in Docker containers.
+
+**Option B: Manual Setup**
+
+See [POSTGRES_SETUP.md](POSTGRES_SETUP.md) for detailed PostgreSQL installation and configuration instructions.
+
+### 3. Build the Backend
 
 ```bash
 cd backend
 mvn clean install
 ```
 
-### 3. Run the Application
+### 4. Run the Application
 
 ```bash
 mvn spring-boot:run
@@ -178,18 +193,17 @@ Or run the JAR:
 java -jar target/xsd-service-platform-1.0.0.jar
 ```
 
-### 4. Verify Installation
+### 5. Verify Installation
 
 The application will start on **http://localhost:8080**
 
 - **Swagger UI**: http://localhost:8080/swagger-ui.html
-- **H2 Console**: http://localhost:8080/h2-console
-  - JDBC URL: `jdbc:h2:mem:xsdplatform`
-  - Username: `sa`
-  - Password: (leave empty)
 - **Actuator Health**: http://localhost:8080/actuator/health
+- **pgAdmin** (if using Docker): http://localhost:5050
+  - Email: admin@admin.com
+  - Password: admin
 
-### 5. Upload Your First XSD
+### 6. Upload Your First XSD
 
 Using curl:
 
@@ -758,11 +772,28 @@ java -Xmx2g -jar \
   target/xsd-service-platform-1.0.0.jar
 ```
 
-### Using Docker (Future)
+### Using Docker
+
+**Start Full Stack (PostgreSQL + Backend):**
 
 ```bash
+# Start PostgreSQL
+docker-compose up -d postgres
+
+# Build and start backend (uncomment backend service in docker-compose.yml first)
+docker-compose up -d backend
+```
+
+**Or build and run backend Docker image manually:**
+
+```bash
+cd backend
 docker build -t xsd-platform .
-docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE=prod xsd-platform
+docker run -p 8080:8080 \
+  -e SPRING_PROFILES_ACTIVE=prod \
+  -e DB_HOST=postgres \
+  -e DB_PASSWORD=yourpassword \
+  xsd-platform
 ```
 
 ### Environment Variables

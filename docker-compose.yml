@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: xsd-platform-postgres
+    environment:
+      POSTGRES_DB: xsdplatform
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - xsd-platform-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Uncomment to run the backend in Docker
+  # backend:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   container_name: xsd-platform-backend
+  #   environment:
+  #     SPRING_PROFILES_ACTIVE: prod
+  #     DB_HOST: postgres
+  #     DB_PORT: 5432
+  #     DB_NAME: xsdplatform
+  #     DB_USERNAME: postgres
+  #     DB_PASSWORD: postgres
+  #     JWT_SECRET: your-secret-key-change-this-in-production
+  #   ports:
+  #     - "8080:8080"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   networks:
+  #     - xsd-platform-network
+  #   volumes:
+  #     - ./xsd-storage:/app/xsd-storage
+  #     - ./temp:/app/temp
+  #     - ./logs:/app/logs
+
+  # pgAdmin for database management (optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: xsd-platform-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    networks:
+      - xsd-platform-network
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  xsd-platform-network:
+    driver: bridge
