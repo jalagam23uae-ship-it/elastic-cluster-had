@@ -40,7 +40,6 @@ public class ServiceDefinition {
     @JoinColumn(name = "schema_id", referencedColumnName = "id", nullable = false)
     private SchemaMetadata schemaMetadata;
 
-    @Lob
     @Column(columnDefinition = "TEXT")
     private String wsdlContent;
 

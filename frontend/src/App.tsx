@@ -10,6 +10,9 @@ import MainLayout from './components/layout/MainLayout';
 import Dashboard from './pages/Dashboard';
 import SchemaManagement from './pages/SchemaManagement';
 import ServicesPage from './pages/ServicesPage';
+import ApiTesting from './pages/ApiTesting';
+import Settings from './pages/Settings';
+import Monitoring from './pages/Monitoring';
 
 // Create QueryClient instance
 const queryClient = new QueryClient({
@@ -55,10 +58,10 @@ const App: React.FC = () => {
             <Route index element={<Dashboard />} />
             <Route path="schemas" element={<SchemaManagement />} />
             <Route path="services" element={<ServicesPage />} />
-            <Route path="testing" element={<PlaceholderPage title="API Testing" />} />
+            <Route path="testing" element={<ApiTesting />} />
             <Route path="docs" element={<PlaceholderPage title="Documentation" />} />
-            <Route path="monitoring" element={<PlaceholderPage title="Monitoring" />} />
-            <Route path="settings" element={<PlaceholderPage title="Settings" />} />
+            <Route path="monitoring" element={<Monitoring />} />
+            <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>
       </BrowserRouter>

@@ -1,5 +1,6 @@
 package com.dynamic.xsd.config;
 
+import com.dynamic.xsd.interceptor.MetricsInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -12,6 +13,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * Features:
  * - CORS configuration
  * - Rate limiting interceptor
+ * - Metrics interceptor
  * - Custom interceptors
  */
 @Configuration
@@ -19,6 +21,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebMvcConfig implements WebMvcConfigurer {
 
     private final RateLimitInterceptor rateLimitInterceptor;
+    private final MetricsInterceptor metricsInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
@@ -26,6 +29,18 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addInterceptor(rateLimitInterceptor)
             .addPathPatterns("/api/**")
             .excludePathPatterns("/api/v1/auth/login", "/api/v1/auth/register"); // Allow auth endpoints
+
+        // Add metrics collection for dynamic service endpoints
+        registry.addInterceptor(metricsInterceptor)
+            .addPathPatterns(
+                "/api/v1/services/**",  // REST endpoints
+                "/ws/**"                 // SOAP endpoints
+            )
+            .excludePathPatterns(
+                "/api/v1/services/deploy",      // Exclude management endpoints
+                "/api/v1/services/*/undeploy",
+                "/api/v1/services/*/status"
+            );
     }
 
     @Override

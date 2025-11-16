@@ -36,10 +36,10 @@ public class SchemaMetadata {
     @Column(nullable = false)
     private String version;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String namespace;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String targetNamespace;
 
     @Column(nullable = false)
@@ -63,8 +63,7 @@ public class SchemaMetadata {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    @Lob
-    @Column(columnDefinition = "CLOB")
+    @Column(columnDefinition = "TEXT")
     private String xsdContent;
 
     @Column
